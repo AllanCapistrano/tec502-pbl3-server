@@ -63,7 +63,12 @@ public class Reader {
                 int index = RandomUtil.generateInt(0, completeFile.size());
                 String[] temp = completeFile.get(index).split(",");
                 
-                graph.addEdge(temp[0], temp[1], Float.parseFloat(temp[2]), companyName);
+                graph.addEdge(temp[0], 
+                        temp[1], 
+                        Float.parseFloat(temp[2]), 
+                        companyName, 
+                        Integer.parseInt(temp[3])
+                );
                 
                 completeFile.remove(index);
             }

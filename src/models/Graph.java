@@ -43,12 +43,14 @@ public class Graph {
      * @param secondCity String - Segunda cidade.
      * @param time float - Tempo de voo entre as duas cidades.
      * @param companyName String - Nome da companhia aérea.
+     * @param amountSeat int - Quantidade de acentos.
      */
     public void addEdge(
             String firstCity,
             String secondCity,
             float time,
-            String companyName
+            String companyName,
+            int amountSeat
     ) {
         this.addVertex(firstCity);
         this.addVertex(secondCity);
@@ -58,7 +60,8 @@ public class Graph {
                         new Vertex(firstCity),
                         new Vertex(secondCity),
                         time,
-                        companyName
+                        companyName,
+                        amountSeat
                 )
         );
         this.edges.add(
@@ -66,7 +69,8 @@ public class Graph {
                         new Vertex(secondCity),
                         new Vertex(firstCity),
                         time,
-                        companyName
+                        companyName,
+                        amountSeat
                 )
         );
     }

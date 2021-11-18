@@ -21,6 +21,7 @@ public class Edge {
     private float price;
     private String companyName;
     private float companyTariff;
+    private int amountSeat;
 
     /**
      * Método construtor.
@@ -29,12 +30,14 @@ public class Edge {
      * @param secondCity Vertex - Segunda cidade.
      * @param timeTravel double - Tempo de duração da viagem em horas.
      * @param companyName String - Nome da companhia.
+     * @param amountSeat int - Quantidade de acentos.
      */
     public Edge(
             Vertex firstCity,
             Vertex secondCity,
             double timeTravel,
-            String companyName
+            String companyName,
+            int amountSeat
     ) {
         this.firstCity = firstCity;
         this.secondCity = secondCity;
@@ -100,5 +103,13 @@ public class Edge {
 
     public float getCompanyTariff() {
         return companyTariff;
+    }
+
+    public int getAmountSeat() {
+        return amountSeat;
+    }
+
+    public void setAmountSeat(int amountSeat) {
+        this.amountSeat = amountSeat;
     }
 }
