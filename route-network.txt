@@ -1,15 +1,15 @@
-São Luís,Fortaleza,2.2
-Fortaleza,Natal,1.5
-Natal,João Pessoa,0.9
-João Pessoa,Recife,0.8
-Recife,Maceió,0.8
-Maceió,Aracaju,0.7
-Aracaju,Salvador,0.9
-Salvador,Teresina,3.0
-Teresina,São Luís,1.6
-Teresina,Fortaleza,1.6
-Teresina,João Pessoa,2.5
-Fortaleza,João Pessoa,1.4
-João Pessoa,Maceió,1.1
-João Pessoa,Aracaju,1.4
-Natal,Recife,0.8
+São Luís,Fortaleza,2.2,5
+Fortaleza,Natal,1.5,8
+Natal,João Pessoa,0.9,10
+João Pessoa,Recife,0.8,9
+Recife,Maceió,0.8,5
+Maceió,Aracaju,0.7,7
+Aracaju,Salvador,0.9,9
+Salvador,Teresina,3.0,5
+Teresina,São Luís,1.6,8
+Teresina,Fortaleza,1.6,7
+Teresina,João Pessoa,2.5,9
+Fortaleza,João Pessoa,1.4,7
+João Pessoa,Maceió,1.1,8
+João Pessoa,Aracaju,1.4,5
+Natal,Recife,0.8,10
