@@ -30,13 +30,15 @@ public class Server {
     /*------------------------------------------------------------------------*/
 
     private static ServerSocket server;
-    public static List<ServerAddress> serverAddress = new ArrayList<ServerAddress>();
+    public static List<ServerAddress> serverAddress
+            = new ArrayList<ServerAddress>();
     public static Graph graph = new Graph();
     public static Graph unifiedGraph = new Graph();
     private static ArrayList<ConnectionHandler> connHandler = new ArrayList<>();
     private static ExecutorService pool = Executors.newCachedThreadPool();
 
-    public static void main(String[] args) throws IOException, ClassNotFoundException {
+    public static void main(String[] args)
+            throws IOException, ClassNotFoundException {
         Scanner keyboardInput = new Scanner(System.in);
         int regionIndex = 0;
 
