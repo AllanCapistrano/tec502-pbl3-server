@@ -64,15 +64,6 @@ public class Graph {
                         amountSeat
                 )
         );
-        this.edges.add(
-                new Edge(
-                        new Vertex(secondCity),
-                        new Vertex(firstCity),
-                        time,
-                        companyName,
-                        amountSeat
-                )
-        );
     }
 
     /**
@@ -144,13 +135,18 @@ public class Graph {
      *
      * @param startCity String - Nome da cidade incial.
      * @param endCity String - Nome da cidade final.
+     * @return List<Travel>.
      */
-    public void depthFirst(String startCity, String endCity) {
+    public List<Travel> depthFirst(String startCity, String endCity) {
         LinkedList<Vertex> visited = new LinkedList();
 
         visited.add(new Vertex(startCity));
+        
+        this.travels.removeAll(this.travels);
 
         this.depthFirst(this, visited, new Vertex(endCity));
+        
+        return this.travels;
     }
 
     /**
