@@ -4,7 +4,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import org.json.JSONArray;
+import java.util.List;
+import models.Travel;
 import org.json.JSONObject;
 
 /**
@@ -59,26 +60,72 @@ public class ConnectionHandler implements Runnable {
      */
     private void processRequests(String httpRequest) {
         System.out.println("> Processando a requisição");
-        
-        if(httpRequest.equals("GET /routes")) {
-            
-        } else if(httpRequest.equals("POST /buy")) {
-            
-        } else if(httpRequest.equals("POST /buy/authorization")) {
-            
-        } else if(httpRequest.equals("GET /graph")) {
-            
+
+        try {
+            if (httpRequest.equals("GET /routes")) {
+                System.out.println("> Rota: /routes");
+                System.out.println("\t Método: GET");
+                
+                ObjectInputStream secondInput
+                        = new ObjectInputStream(connection.getInputStream());
+
+                String[] request
+                        = ((String) secondInput.readObject()).split(",");
+
+                this.sendRoutes(request[0], request[1]);
+            } else if (httpRequest.equals("POST /buy")) {
+
+            } else if (httpRequest.equals("POST /buy/authorization")) {
+
+            } else if (httpRequest.equals("GET /graph")) {
+
+            }
+        } catch (IOException ioe) {
+            System.err.println("Erro ao receber as requisições.");
+            System.out.println(ioe);
+        } catch (ClassNotFoundException cnfe) {
+            System.err.println("Classe String não foi encontrada.");
+            System.out.println(cnfe);
         }
-        
+
         System.out.println("");
+    }
+
+    /**
+     * Envia todos os possíveis trajetos entre duas cidades
+     *
+     * @param firstCity String - Primeira cidade.
+     * @param secondCity String - Segunda cidade.
+     */
+    private void sendRoutes(String firstCity, String secondCity) {
+        try {
+            ObjectOutputStream output
+                    = new ObjectOutputStream(connection.getOutputStream());
+
+            List<Travel> routes
+                    = Server.graph.depthFirst(firstCity, secondCity);
+            
+            System.out.println("> Enviando as possíveis rotas (Qtd: " + routes.size() +")...");
+            
+            System.out.println();
+
+            output.flush();
+            output.writeObject(routes);
+            output.flush();
+
+            output.close();
+        } catch (IOException ioe) {
+            System.err.println("Erro ao tentar enviar a lista de trajetos.");
+            System.out.println(ioe);
+        }
     }
 
     private void sendRoutes() {
         try {
             String cities[] = ((String) this.input.readObject()).split(",");
-            
+
             Server.unifiedGraph.depthFirst(cities[0], cities[1]);
-            
+
         } catch (IOException ioe) {
             System.err.println("Erro de Entrada/Saída.");
             System.out.println(ioe);
@@ -86,7 +133,7 @@ public class ConnectionHandler implements Runnable {
             System.err.println("Classe String não foi encontrada.");
             System.out.println(cnfe);
         }
-        
+
     }
 
     /**
