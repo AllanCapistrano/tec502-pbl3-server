@@ -1,5 +1,6 @@
 package models;
 
+import java.io.Serializable;
 import java.util.Objects;
 import utils.RandomUtil;
 
@@ -9,7 +10,7 @@ import utils.RandomUtil;
  * @author Allan Capistrano
  * @author João Erick Barbosa
  */
-public class Edge {
+public class Edge implements Serializable {
 
     /*-------------------------- Constante -----------------------------------*/
     private static final float BASE_VALUE = 3200;

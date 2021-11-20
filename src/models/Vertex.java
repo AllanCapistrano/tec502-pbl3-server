@@ -1,5 +1,6 @@
 package models;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -8,7 +9,7 @@ import java.util.Objects;
  * @author Allan Capistrano
  * @author João Erick Barbosa
  */
-public class Vertex {
+public class Vertex implements Serializable {
 
     private String cityName;
 
