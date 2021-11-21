@@ -54,7 +54,7 @@ public class Graph {
     ) {
         this.addVertex(firstCity);
         this.addVertex(secondCity);
-
+        
         this.edges.add(
                 new Edge(
                         new Vertex(firstCity),
