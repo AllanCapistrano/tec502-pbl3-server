@@ -83,12 +83,6 @@ public class Server {
 
             System.out.println("> Aguardando conexão");
 
-            System.out.println(IP_ADDRESS);
-            System.out.println(PORT);
-            System.out.println(COMPANY_NAME);
-            System.out.println(graph.verticesSize());
-            System.out.println(graph.edgesSize());
-
             while (true) {
                 /* Serviço que lida com as requisições utilizando threads. */
                 ConnectionHandler connectionThread
