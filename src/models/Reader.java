@@ -10,21 +10,22 @@ import utils.RandomUtil;
 
 /**
  * Classe para a leitura do arquivo.
- * 
+ *
  * @author Allan Capistrano
  * @author João Erick Barbosa
  */
 public class Reader {
+
     /*-------------------------- Constantes ----------------------------------*/
     private static final String FILE_NAME = "route-network.txt";
     /*------------------------------------------------------------------------*/
-    
+
     private File file;
 
     /**
      * Método construtor.
      */
-    public Reader(){
+    public Reader() {
         try {
             this.file = new File(FILE_NAME);
             file.createNewFile();
@@ -36,19 +37,19 @@ public class Reader {
 
     /**
      * Monta um grafo a partir de um arquivo.
-     * 
+     *
      * @param graph Graph - Grafo.
      * @param companyName String - Nome da companhia.
      * @param amountParts int - Quantidade de trechos para a companhia.
      * @return boolean
      */
     public boolean generateGraph(Graph graph, String companyName, int amountParts) {
-        if(file.getName().compareTo(FILE_NAME) != 0) {
+        if (file.getName().compareTo(FILE_NAME) != 0) {
             return false;
         }
-        
-        List<String> completeFile  = new ArrayList<>();
-        
+
+        List<String> completeFile = new ArrayList<>();
+
         try {
             BufferedReader br = new BufferedReader(new FileReader(file));
             String line;
@@ -57,31 +58,32 @@ public class Reader {
                 completeFile.add(line);
             }
             br.close();
-            
+
             /* Adicionando trechos aleatórios no grafo da companhia. */
             for (int i = 0; i < amountParts; i++) {
                 int index = RandomUtil.generateInt(0, completeFile.size());
                 String[] temp = completeFile.get(index).split(",");
-                
-                    graph.addEdge(temp[0], 
-                            temp[1], 
-                        Float.parseFloat(temp[2]), 
-                        companyName, 
+
+                graph.addEdge(
+                        temp[0],
+                        temp[1],
+                        Float.parseFloat(temp[2]),
+                        companyName,
                         Integer.parseInt(temp[3])
                 );
-                
+
                 completeFile.remove(index);
             }
-            
+
             return true;
         } catch (IOException ioe) {
             System.err.println("Erro ao tentar ler o arquivo e/ou montar o grafo.");
             System.out.println(ioe);
-            
+
             return false;
         }
     }
-    
+
     public File getFile() {
         return file;
     }
