@@ -100,8 +100,7 @@ public class Graph {
                         edge.getFirstCity().getCityName() + " -> "
                         + edge.getSecondCity().getCityName()
                         + " | [" + edge.getCompanyName()
-                        + ", " + edge.getTimeTravel()
-                        + ", " + edge.getPrice() + "] "
+                        + ", " + edge.getTimeTravel() + "] "
                 );
             }
         }
