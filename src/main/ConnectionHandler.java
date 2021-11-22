@@ -65,12 +65,23 @@ public class ConnectionHandler implements Runnable {
             if (httpRequest.equals("GET /routes")) {
                 System.out.println("> Rota: /routes");
                 System.out.println("\t Método: GET");
-                
+
                 ObjectInputStream secondInput
                         = new ObjectInputStream(connection.getInputStream());
 
                 String[] request
                         = ((String) secondInput.readObject()).split(",");
+
+                Server.unifyGraph();
+
+                /* Aguardar o grafo ser unificado. */
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException ie) {
+                    System.err.println("Thread finalizada de maneira "
+                            + "inesperada.");
+                    System.out.println(ie);
+                }
 
                 this.sendRoutes(request[0], request[1]);
             } else if (httpRequest.equals("POST /buy")) {
@@ -78,7 +89,9 @@ public class ConnectionHandler implements Runnable {
             } else if (httpRequest.equals("POST /buy/authorization")) {
 
             } else if (httpRequest.equals("GET /graph")) {
-
+                System.out.println("> Rota: /graph");
+                System.out.println("\t Método: GET");
+                this.sendGraph();
             }
         } catch (IOException ioe) {
             System.err.println("Erro ao receber as requisições.");
@@ -102,11 +115,13 @@ public class ConnectionHandler implements Runnable {
             ObjectOutputStream output
                     = new ObjectOutputStream(connection.getOutputStream());
 
+//            List<Travel> routes
+//                    = Server.graph.depthFirst(firstCity, secondCity);
             List<Travel> routes
-                    = Server.graph.depthFirst(firstCity, secondCity);
-            
-            System.out.println("> Enviando as possíveis rotas (Qtd: " + routes.size() +")...");
-            
+                    = Server.unifiedGraph.depthFirst(firstCity, secondCity);
+
+            System.out.println("> Enviando as possíveis rotas (Qtd: " + routes.size() + ")...");
+
             System.out.println();
 
             output.flush();
@@ -120,20 +135,25 @@ public class ConnectionHandler implements Runnable {
         }
     }
 
-    private void sendRoutes() {
+    /**
+     * Envia o grafo desta companhia.
+     */
+    private void sendGraph() {
         try {
-            String cities[] = ((String) this.input.readObject()).split(",");
+            ObjectOutputStream output
+                    = new ObjectOutputStream(connection.getOutputStream());
 
-            Server.unifiedGraph.depthFirst(cities[0], cities[1]);
+            System.out.println("> Enviando o grafo...");
 
+            output.flush();
+            output.writeObject(Server.graph);
+            output.flush();
+
+            output.close();
         } catch (IOException ioe) {
-            System.err.println("Erro de Entrada/Saída.");
+            System.err.println("Erro ao tentar enviar o grafo.");
             System.out.println(ioe);
-        } catch (ClassNotFoundException cnfe) {
-            System.err.println("Classe String não foi encontrada.");
-            System.out.println(cnfe);
         }
-
     }
 
     /**
