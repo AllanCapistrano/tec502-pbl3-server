@@ -14,6 +14,7 @@ public class Graph {
 
     private List<Vertex> vertices;
     private List<Edge> edges;
+    private List<Edge> edgesMultiGraph;
     private List<Travel> travels;
 
     /**
@@ -22,6 +23,7 @@ public class Graph {
     public Graph() {
         this.vertices = new ArrayList<>();
         this.edges = new ArrayList<>();
+        this.edgesMultiGraph = new ArrayList<>();
         this.travels = new ArrayList<>();
     }
 
@@ -41,29 +43,51 @@ public class Graph {
      *
      * @param firstCity String - Primeira cidade.
      * @param secondCity String - Segunda cidade.
-     * @param time float - Tempo de voo entre as duas cidades.
+     * @param time double - Tempo de voo entre as duas cidades.
      * @param companyName String - Nome da companhia aérea.
      * @param amountSeat int - Quantidade de acentos.
      */
     public void addEdge(
             String firstCity,
             String secondCity,
-            float time,
+            double time,
             String companyName,
             int amountSeat
     ) {
-        this.addVertex(firstCity);
-        this.addVertex(secondCity);
         
-        this.edges.add(
-                new Edge(
-                        new Vertex(firstCity),
-                        new Vertex(secondCity),
-                        time,
-                        companyName,
-                        amountSeat
-                )
-        );
+        if (!edgeExists(firstCity, secondCity)) {
+            this.addVertex(firstCity);
+            this.addVertex(secondCity);
+            this.edges.add(
+                    new Edge(
+                            new Vertex(firstCity),
+                            new Vertex(secondCity),
+                            time,
+                            companyName,
+                            amountSeat
+                    )
+            );
+            this.edgesMultiGraph.add(
+                    new Edge(
+                            new Vertex(firstCity),
+                            new Vertex(secondCity),
+                            time,
+                            companyName,
+                            amountSeat
+                    )
+            );
+        } else {
+            this.edgesMultiGraph.add(
+                    new Edge(
+                            new Vertex(firstCity),
+                            new Vertex(secondCity),
+                            time,
+                            companyName,
+                            amountSeat
+                    )
+            );
+        }
+
     }
 
     /**
@@ -92,7 +116,7 @@ public class Graph {
     public List<Edge> findEdge(String firstCity, String secondCity) {
         List<Edge> temp = new ArrayList<>();
 
-        for (Edge edge : this.edges) {
+        for (Edge edge : this.edgesMultiGraph) {
             if (edge.equals(new Edge(firstCity, secondCity))) {
                 temp.add(edge);
                 /* TEMPORÁRIO */
@@ -108,6 +132,23 @@ public class Graph {
         System.out.println("");
 
         return temp;
+    }
+
+    /**
+     * Verifica se já existe uma ligação entre duas cidades.
+     *
+     * @param firstCity String - Nome da primeira cidade.
+     * @param secondCity String - Nome da segunda cidade.
+     * @return boolean.
+     */
+    public boolean edgeExists(String firstCity, String secondCity) {
+        for (Edge edge : this.edges) {
+            if (edge.equals(new Edge(firstCity, secondCity))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -140,11 +181,11 @@ public class Graph {
         LinkedList<Vertex> visited = new LinkedList();
 
         visited.add(new Vertex(startCity));
-        
+
         this.travels.removeAll(this.travels);
 
         this.depthFirst(this, visited, new Vertex(endCity));
-        
+
         return this.travels;
     }
 
