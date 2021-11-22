@@ -115,8 +115,6 @@ public class ConnectionHandler implements Runnable {
             ObjectOutputStream output
                     = new ObjectOutputStream(connection.getOutputStream());
 
-//            List<Travel> routes
-//                    = Server.graph.depthFirst(firstCity, secondCity);
             List<Travel> routes
                     = Server.unifiedGraph.depthFirst(firstCity, secondCity);
 
