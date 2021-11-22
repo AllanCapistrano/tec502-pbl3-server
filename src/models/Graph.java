@@ -1,5 +1,6 @@
 package models;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -10,7 +11,7 @@ import java.util.List;
  * @author Allan Capistrano
  * @author João Erick Barbosa
  */
-public class Graph {
+public class Graph implements Serializable{
 
     private List<Vertex> vertices;
     private List<Edge> edges;
@@ -39,6 +40,17 @@ public class Graph {
     }
 
     /**
+     * Adiciona todas as cidades de uma lista.
+     *
+     * @param vertices List<Vertex> - Lista de cidades
+     */
+    private void addVertices(List<Vertex> vertices) {
+        for (Vertex vertex : vertices) {
+            this.addVertex(vertex.getCityName());
+        }
+    }
+
+    /**
      * Adiciona uma nova ligação entre cidades ao grafo.
      *
      * @param firstCity String - Primeira cidade.
@@ -54,7 +66,7 @@ public class Graph {
             String companyName,
             int amountSeat
     ) {
-        
+
         if (!edgeExists(firstCity, secondCity)) {
             this.addVertex(firstCity);
             this.addVertex(secondCity);
@@ -87,7 +99,23 @@ public class Graph {
                     )
             );
         }
+    }
 
+    /**
+     * Adiciona todas as ligações entre cidades de uma lista.
+     *
+     * @param edges List<Edge> - Lista de ligações entre as cidades.
+     */
+    private void addEdges(List<Edge> edges) {
+        for (Edge edge : edges) {
+            this.addEdge(
+                    edge.getFirstCity().getCityName(),
+                    edge.getSecondCity().getCityName(),
+                    edge.getTimeTravel(),
+                    edge.getCompanyName(),
+                    edge.getAmountSeat()
+            );
+        }
     }
 
     /**
@@ -120,16 +148,16 @@ public class Graph {
             if (edge.equals(new Edge(firstCity, secondCity))) {
                 temp.add(edge);
                 /* TEMPORÁRIO */
-                System.out.print(
-                        edge.getFirstCity().getCityName() + " -> "
-                        + edge.getSecondCity().getCityName()
-                        + " | [" + edge.getCompanyName()
-                        + ", " + edge.getTimeTravel() + "] "
-                );
+//                System.out.print(
+//                        edge.getFirstCity().getCityName() + " -> "
+//                        + edge.getSecondCity().getCityName()
+//                        + " | [" + edge.getCompanyName()
+//                        + ", " + edge.getTimeTravel() + "] "
+//                );
             }
         }
         /* TEMPORÁRIO */
-        System.out.println("");
+//        System.out.println("");
 
         return temp;
     }
@@ -243,9 +271,28 @@ public class Graph {
             ));
         }
         /* TEMPORÁRIO */
-        System.out.println("");
+//        System.out.println("");
 
         return travel;
+    }
+
+    /**
+     * Unifica dois grafos.
+     *
+     * @param graph Graph - Grafo que será unificado.
+     */
+    public void unifyGraph(Graph graph) {
+        this.addVertices(graph.getVertices());
+        this.addEdges(graph.getEdgesMultiGraph());
+    }
+    
+    /**
+     * Limpa o grafo unificado.
+     */
+    public void cleanUnifiedGraph(){
+        this.vertices.removeAll(this.vertices);
+        this.edges.removeAll(this.edges);
+        this.edgesMultiGraph.removeAll(this.edgesMultiGraph);
     }
 
     public List<Vertex> getVertices() {
@@ -254,6 +301,10 @@ public class Graph {
 
     public List<Edge> getEdges() {
         return edges;
+    }
+
+    public List<Edge> getEdgesMultiGraph() {
+        return edgesMultiGraph;
     }
 
     public int verticesSize() {
