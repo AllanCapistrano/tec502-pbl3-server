@@ -58,7 +58,6 @@ public class Reader {
                 completeFile.add(line);
             }
             br.close();
-
             /* Adicionando trechos aleatórios no grafo da companhia. */
             for (int i = 0; i < amountParts; i++) {
                 int index = RandomUtil.generateInt(0, completeFile.size());
@@ -67,11 +66,11 @@ public class Reader {
                 graph.addEdge(
                         temp[0],
                         temp[1],
-                        Float.parseFloat(temp[2]),
+                        Double.parseDouble(temp[2]),
                         companyName,
                         Integer.parseInt(temp[3])
                 );
-
+                
                 completeFile.remove(index);
             }
 
