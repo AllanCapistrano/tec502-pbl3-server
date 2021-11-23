@@ -26,7 +26,7 @@ import models.ServerAddress;
 public class Server {
 
     /*-------------------------- Constantes ----------------------------------*/
-    private static final int AMOUNT_OF_PARTS = 5;
+    private static final int AMOUNT_OF_PARTS = 10;
     private static final int SLEEP_TIME = 30000;
     /*------------------------------------------------------------------------*/
 
