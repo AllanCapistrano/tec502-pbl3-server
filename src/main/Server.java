@@ -148,8 +148,6 @@ public class Server {
                                     Graph otherGraph
                                             = (Graph) input.readObject();
 
-                                    System.out.println(otherGraph);
-
                                     /* Unificando o grafo da companhia com as 
                                 demais. */
                                     unifiedGraph.unifyGraph(otherGraph);
