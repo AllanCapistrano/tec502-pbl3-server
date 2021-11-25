@@ -110,13 +110,20 @@ public class Server {
 
                                 if (socket.isConnected()) {
                                     amountConnections++;
-                                    System.out.println("Servidores vivos: " + amountConnections);
-                                    System.out.println("Enviando ping...");
+                                    System.out.println("\n> Servidores vivos: " + amountConnections);
                                     ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
                                     output.flush();
-                                    output.writeObject("Teste");
+                                    if(coordinator != null && coordinator.getCompanyName().equals(companyName)){
+                                        output.writeObject("POST /coordinatorAlive");
+                                    } else{
+                                        output.writeObject("POST /ping");
+                                    }
                                     output.flush();
-                                    System.out.println("Ping enviado.");
+                                    
+                                    
+                                    ObjectOutputStream outputBody = new ObjectOutputStream(socket.getOutputStream());
+                                    outputBody.flush();
+                                    outputBody.writeObject(companyName);
                                 }
 
                                 socket.close();
@@ -132,15 +139,15 @@ public class Server {
                         if (serverStarted && amountConnections > 0 && !electionActive) {
                             coordinator = null;
                             startElection();
-                            System.out.println("if");
-                        } else if(coordinator != null && coordinator.getCompanyName().equals(companyName)){
+
+                        } else if (coordinator != null && coordinator.getCompanyName().equals(companyName) && !electionActive) {
                             startElection();
-                            System.out.println("else if");
-                        } else if(amountConnections == 0) {
+
+                        } else if (amountConnections == 0) {
                             coordinator = new ServerAddress(ipAddress, port, companyName);
                             System.out.println("Sou o coordenador: " + coordinator.getCompanyName());
                         }
-                        
+
                         serverStarted = false;
                         amountConnections = 0;
 
@@ -328,7 +335,7 @@ public class Server {
         }
 
         if (indexList.size() > 1) {
-            coordinatorIndex = RandomUtil.generateInt(0, indexList.size());
+            coordinatorIndex = indexList.get(RandomUtil.generateInt(0, indexList.size()));
         } else {
             coordinatorIndex = indexList.get(0);
         }
@@ -341,7 +348,7 @@ public class Server {
         if (coordinatorIndex == 0) {
             coordinator = new ServerAddress(ipAddress, port, companyName);
         } else {
-            coordinator = serverAddress.get(coordinatorIndex);
+            coordinator = serverAddress.get(coordinatorIndex-1);
         }
         for (ServerAddress server : serverAddress) {
             try {
@@ -380,7 +387,7 @@ public class Server {
                 System.out.println(ioe);
             }
         }
-        
+
         electionActive = false;
     }
 }

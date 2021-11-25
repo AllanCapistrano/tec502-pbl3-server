@@ -110,8 +110,14 @@ public class ConnectionHandler implements Runnable {
                 Server.electionActive = false;
                 
                 System.out.println("Novo coordenador: " + Server.coordinator.getCompanyName());
-            } else if(httpRequest.equals("Teste")){
-                System.out.println("Estou vivo!");
+            } else if(httpRequest.equals("POST /ping")){
+                ObjectInputStream inputBody
+                        = new ObjectInputStream(connection.getInputStream());
+                System.out.println("O servidor da companhia " + ((String) inputBody.readObject()) + " vivo!");
+            } else if(httpRequest.equals("POST /coordinatorAlive")){
+                ObjectInputStream inputBody
+                        = new ObjectInputStream(connection.getInputStream());
+                System.out.println("[Coordenador] O servidor da companhia " + ((String) inputBody.readObject()) + " vivo!");
             }
         } catch (IOException ioe) {
             System.err.println("Erro ao receber as requisições.");
