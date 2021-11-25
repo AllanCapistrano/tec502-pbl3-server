@@ -1,12 +1,14 @@
 package models;
 
+import java.io.Serializable;
+
 /**
  * Responsável pelas informações de endereço do servidor.
  *
  * @author Allan Capistrano
  * @author João Erick Barbosa
  */
-public class ServerAddress {
+public class ServerAddress implements Serializable {
 
     private final String ipAddress;
     private final int port;

@@ -5,6 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.List;
+import models.ServerAddress;
 import models.Travel;
 import org.json.JSONObject;
 
@@ -45,7 +46,7 @@ public class ConnectionHandler implements Runnable {
             input.close();
             connection.close();
         } catch (IOException ioe) {
-            System.err.println("Erro de Entrada/Saída.");
+            System.err.println("Erro de Entrada/SaídaAA.");
             System.out.println(ioe);
         } catch (ClassNotFoundException cnfe) {
             System.err.println("Classe String não foi encontrada.");
@@ -92,6 +93,25 @@ public class ConnectionHandler implements Runnable {
                 System.out.println("> Rota: /graph");
                 System.out.println("\t Método: GET");
                 this.sendGraph();
+            } else if(httpRequest.equals("GET /startElection")){
+                System.out.println("> Rota: /startElection");
+                System.out.println("\t Método: GET");
+                System.out.println("\t Quantidade de requisições: " + Server.requestsSize);
+                Server.electionActive = true;
+                sendAmountRequests();
+            } else if(httpRequest.equals("POST /coordinator")){
+                System.out.println("> Rota: /coordinator");
+                System.out.println("\t Método: POST");
+                ObjectInputStream secondInput
+                        = new ObjectInputStream(connection.getInputStream());
+
+                Server.coordinator
+                        = (ServerAddress) secondInput.readObject();
+                Server.electionActive = false;
+                
+                System.out.println("Novo coordenador: " + Server.coordinator.getCompanyName());
+            } else if(httpRequest.equals("Teste")){
+                System.out.println("Estou vivo!");
             }
         } catch (IOException ioe) {
             System.err.println("Erro ao receber as requisições.");
@@ -150,6 +170,24 @@ public class ConnectionHandler implements Runnable {
             output.close();
         } catch (IOException ioe) {
             System.err.println("Erro ao tentar enviar o grafo.");
+            System.out.println(ioe);
+        }
+    }
+    
+    private void sendAmountRequests(){
+        try {
+            ObjectOutputStream output
+                    = new ObjectOutputStream(connection.getOutputStream());
+
+            System.out.println("> Enviando a quantidade de requisições...");
+
+            output.flush();
+            output.writeObject(Server.requestsSize);
+            output.flush();
+
+            output.close();
+        } catch (IOException ioe) {
+            System.err.println("Erro ao tentar enviar a quantidade de requisições.");
             System.out.println(ioe);
         }
     }
