@@ -34,7 +34,7 @@ public class Server {
 
     private static String ipAddress;
     private static int port;
-    private static String companyName;
+    public static String companyName;
     private static ServerSocket server;
     public static List<ServerAddress> serverAddress
             = new ArrayList<ServerAddress>();
@@ -54,7 +54,7 @@ public class Server {
     public static void main(String[] args)
             throws IOException, ClassNotFoundException {
         Scanner keyboardInput = new Scanner(System.in);
-        int regionIndex = 0;
+        int companyIndex = 0;
 
         /* Adicionando os servidores. */
         serverAddress.add(new ServerAddress("localhost", 12240, "Azul"));
@@ -68,14 +68,14 @@ public class Server {
         System.out.print("> ");
 
         try {
-            regionIndex = keyboardInput.nextInt() - 1;
+            companyIndex = keyboardInput.nextInt() - 1;
 
-            ipAddress = serverAddress.get(regionIndex).getIpAddress();
-            port = serverAddress.get(regionIndex).getPort();
-            companyName = serverAddress.get(regionIndex).getCompanyName();
+            ipAddress = serverAddress.get(companyIndex).getIpAddress();
+            port = serverAddress.get(companyIndex).getPort();
+            companyName = serverAddress.get(companyIndex).getCompanyName();
 
             /* Removendo o endereço deste servidor. */
-            serverAddress.remove(regionIndex);
+            serverAddress.remove(companyIndex);
         } catch (Exception e) {
             System.err.println("Erro ao dar entrada nas opções.");
             System.out.println(e);
@@ -110,17 +110,12 @@ public class Server {
 
                                 if (socket.isConnected()) {
                                     amountConnections++;
-                                    System.out.println("\n> Servidores vivos: " + amountConnections);
+                                    System.out.println("\n> Servidores vivos: " + "[" + (amountConnections+1) + "]\n");
                                     ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
                                     output.flush();
-                                    if(coordinator != null && coordinator.getCompanyName().equals(companyName)){
-                                        output.writeObject("POST /coordinatorAlive");
-                                    } else{
-                                        output.writeObject("POST /ping");
-                                    }
+                                    output.writeObject("POST /ping");
                                     output.flush();
-                                    
-                                    
+
                                     ObjectOutputStream outputBody = new ObjectOutputStream(socket.getOutputStream());
                                     outputBody.flush();
                                     outputBody.writeObject(companyName);
@@ -132,8 +127,34 @@ public class Server {
                                         + "comunicar com o servidor: "
                                         + server.getCompanyName()
                                 );
-                                System.out.println(ioe);
                             }
+                        }
+
+                        try {
+                            if (coordinator != null && !coordinator.getCompanyName().equals(companyName)) {
+                                Socket socketCoordinator
+                                        = new Socket(
+                                                coordinator.getIpAddress(),
+                                                coordinator.getPort()
+                                        );
+                                if (socketCoordinator.isConnected()) {
+                                    ObjectOutputStream output = new ObjectOutputStream(socketCoordinator.getOutputStream());
+                                    output.flush();
+                                    output.writeObject("GET /coordinatorAlive");
+
+                                    ObjectInputStream inputBody
+                                            = new ObjectInputStream(socketCoordinator.getInputStream());
+                                    System.out.println("[Coordenador] O servidor da companhia " + ((String) inputBody.readObject()) + " vivo!");
+                                }
+                            }
+
+                        } catch (IOException ex) {
+                            System.err.println("\nCoordenador OFF.\n");
+                            startElection();
+                        } catch (ClassNotFoundException cnfe) {
+                            System.err.println("A classe String não foi "
+                                        + "encontrada.");
+                                System.out.println(cnfe);
                         }
 
                         if (serverStarted && amountConnections > 0 && !electionActive) {
@@ -239,11 +260,10 @@ public class Server {
 
                                 socket.close();
                             } catch (IOException ioe) {
-                                System.err.println("Erro ao tentar se "
+                                System.err.println("\nErro ao tentar se "
                                         + "comunicar com o servidor: "
-                                        + server.getCompanyName()
+                                        + server.getCompanyName() + "\n"
                                 );
-                                System.out.println(ioe);
                             } catch (ClassNotFoundException cnfe) {
                                 System.err.println("A classe Graph não foi "
                                         + "encontrada.");
@@ -313,7 +333,6 @@ public class Server {
                         + "comunicar com o servidor: "
                         + server.getCompanyName()
                 );
-                System.out.println(ioe);
             } catch (ClassNotFoundException cnfe) {
                 System.err.println("A classe Graph não foi "
                         + "encontrada.");
@@ -348,7 +367,7 @@ public class Server {
         if (coordinatorIndex == 0) {
             coordinator = new ServerAddress(ipAddress, port, companyName);
         } else {
-            coordinator = serverAddress.get(coordinatorIndex-1);
+            coordinator = serverAddress.get(coordinatorIndex - 1);
         }
         for (ServerAddress server : serverAddress) {
             try {
@@ -384,7 +403,6 @@ public class Server {
                         + "comunicar com o servidor: "
                         + server.getCompanyName()
                 );
-                System.out.println(ioe);
             }
         }
 

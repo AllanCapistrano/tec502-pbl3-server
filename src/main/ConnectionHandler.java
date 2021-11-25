@@ -46,7 +46,7 @@ public class ConnectionHandler implements Runnable {
             input.close();
             connection.close();
         } catch (IOException ioe) {
-            System.err.println("Erro de Entrada/SaídaAA.");
+            System.err.println("Erro de Entrada/Saída.");
             System.out.println(ioe);
         } catch (ClassNotFoundException cnfe) {
             System.err.println("Classe String não foi encontrada.");
@@ -85,6 +85,7 @@ public class ConnectionHandler implements Runnable {
                 }
 
                 this.sendRoutes(request[0], request[1]);
+                
             } else if (httpRequest.equals("POST /buy")) {
 
             } else if (httpRequest.equals("POST /buy/authorization")) {
@@ -93,12 +94,14 @@ public class ConnectionHandler implements Runnable {
                 System.out.println("> Rota: /graph");
                 System.out.println("\t Método: GET");
                 this.sendGraph();
+                
             } else if(httpRequest.equals("GET /startElection")){
                 System.out.println("> Rota: /startElection");
                 System.out.println("\t Método: GET");
                 System.out.println("\t Quantidade de requisições: " + Server.requestsSize);
                 Server.electionActive = true;
                 sendAmountRequests();
+                
             } else if(httpRequest.equals("POST /coordinator")){
                 System.out.println("> Rota: /coordinator");
                 System.out.println("\t Método: POST");
@@ -110,14 +113,20 @@ public class ConnectionHandler implements Runnable {
                 Server.electionActive = false;
                 
                 System.out.println("Novo coordenador: " + Server.coordinator.getCompanyName());
+                
             } else if(httpRequest.equals("POST /ping")){
+                System.out.println("> Rota: /ping");
+                System.out.println("\t Método: POST");
                 ObjectInputStream inputBody
                         = new ObjectInputStream(connection.getInputStream());
                 System.out.println("O servidor da companhia " + ((String) inputBody.readObject()) + " vivo!");
-            } else if(httpRequest.equals("POST /coordinatorAlive")){
-                ObjectInputStream inputBody
-                        = new ObjectInputStream(connection.getInputStream());
-                System.out.println("[Coordenador] O servidor da companhia " + ((String) inputBody.readObject()) + " vivo!");
+                
+            } else if(httpRequest.equals("GET /coordinatorAlive")){
+                System.out.println("> Rota: /coordinatorAlive");
+                System.out.println("\t Método: GET");
+                if(Server.coordinator.getCompanyName().equals(Server.companyName)){
+                    sendCoordinatorCompanyName();
+                }
             }
         } catch (IOException ioe) {
             System.err.println("Erro ao receber as requisições.");
@@ -194,6 +203,24 @@ public class ConnectionHandler implements Runnable {
             output.close();
         } catch (IOException ioe) {
             System.err.println("Erro ao tentar enviar a quantidade de requisições.");
+            System.out.println(ioe);
+        }
+    }
+    
+    private void sendCoordinatorCompanyName(){
+        try {
+            ObjectOutputStream output
+                    = new ObjectOutputStream(connection.getOutputStream());
+
+            System.out.println("> Enviando o nome da companhia do coordenador...");
+
+            output.flush();
+            output.writeObject(Server.coordinator.getCompanyName());
+            output.flush();
+
+            output.close();
+        } catch (IOException ioe) {
+            System.err.println("Erro ao tentar enviar o nome da companhia do coordenador.");
             System.out.println(ioe);
         }
     }
