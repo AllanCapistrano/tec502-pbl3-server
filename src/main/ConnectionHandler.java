@@ -5,10 +5,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.List;
+import models.Edge;
 import models.Ticket;
 import models.ServerAddress;
 import models.Travel;
-import org.json.JSONObject;
 
 /**
  * Classe que lida com as requisições enviadas para o servidor.
@@ -30,7 +30,6 @@ public class ConnectionHandler implements Runnable {
      */
     public ConnectionHandler(Socket connection) throws IOException {
         this.connection = connection;
-
         this.input = new ObjectInputStream(connection.getInputStream());
     }
 
@@ -94,9 +93,22 @@ public class ConnectionHandler implements Runnable {
                 ObjectInputStream secondInput
                         = new ObjectInputStream(connection.getInputStream());
 
-                Ticket ticket = (Ticket) secondInput.readObject();
+
+                /* Adicionando a compra da passagem no final da fila de 
+                passagens. */
+                Server.tickets.add((Ticket) secondInput.readObject());
+                /* NÃO VAI USAR */
+                Server.interfaceClient.add(connection);
 
             } else if (httpRequest.equals("POST /buy/authorization")) {
+                System.out.println("> Rota: /authorization");
+                System.out.println("\t Método: POST");
+
+                ObjectInputStream secondInput
+                        = new ObjectInputStream(connection.getInputStream());
+
+                /* VER SE PRECISA MUDAR O NOME DO MÉTODO */
+                this.buyRoute((Edge) secondInput.readObject());
 
             } else if (httpRequest.equals("GET /graph")) {
                 System.out.println("> Rota: /graph");
@@ -108,7 +120,7 @@ public class ConnectionHandler implements Runnable {
                 System.out.println("> Rota: /startElection");
                 System.out.println("\t Método: GET");
                 System.out.println("\t Quantidade de requisições: "
-                        + Server.requestsSize);
+                        + Server.tickets.size());
                 Server.electionActive = true;
 
                 this.sendAmountRequests();
@@ -218,7 +230,7 @@ public class ConnectionHandler implements Runnable {
             System.out.println("> Enviando a quantidade de requisições...");
 
             output.flush();
-            output.writeObject(Server.requestsSize);
+            output.writeObject(Server.tickets.size());
             output.flush();
 
             output.close();
@@ -249,6 +261,44 @@ public class ConnectionHandler implements Runnable {
             System.err.println("Erro ao tentar enviar o nome da companhia do "
                     + "coordenador.");
             System.out.println(ioe);
+        }
+    }
+
+    private void buyRoute(Edge route) {
+        for (Edge r : Server.routes) {
+            try {
+                ObjectOutputStream output
+                        = new ObjectOutputStream(connection.getOutputStream());
+                if (r.equals(route) && r.getAmountSeat() > 0) {
+                    r.setAmountSeat(r.getAmountSeat() - 1);
+
+                    System.out.println("> Enviando a confirmação de compra do "
+                            + "trecho.");
+
+                    output.flush();
+                    output.writeObject("200");
+                    output.flush();
+
+                    output.close();
+
+                    break;
+                } else if (r.getAmountSeat() < 0) {
+                    System.out.println("> Não foi possível realizar a compra do "
+                            + "trecho solicitado.");
+
+                    output.flush();
+                    output.writeObject("400");
+                    output.flush();
+
+                    output.close();
+
+                    break;
+                }
+            } catch (IOException ioe) {
+                System.err.println("Erro ao tentar enviar o nome da companhia do "
+                        + "coordenador.");
+                System.out.println(ioe);
+            }
         }
     }
 }
