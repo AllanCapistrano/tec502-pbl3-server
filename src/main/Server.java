@@ -44,13 +44,14 @@ public class Server {
     private static ExecutorService pool = Executors.newCachedThreadPool();
     private static boolean isThreadCreated = false;
 
-    /*------------------------------------------------------------------------*/
+    /*------------------------ Bully Algorithm -------------------------------*/
     public static volatile ServerAddress coordinator;
     public static volatile boolean electionActive = false;
     public static volatile boolean serverStarted = true;
     public static volatile int requestsSize = RandomUtil.generateInt(0, 10);
     private static int amountConnections = 0;
 
+    /*------------------------------------------------------------------------*/
     public static void main(String[] args)
             throws IOException, ClassNotFoundException {
         Scanner keyboardInput = new Scanner(System.in);
@@ -95,6 +96,7 @@ public class Server {
             Reader reader = new Reader();
             reader.generateGraph(graph, companyName, AMOUNT_OF_PARTS);
 
+            /* Thread para lidar com a eleição do coordenador. */
             Thread thread = new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -110,13 +112,23 @@ public class Server {
 
                                 if (socket.isConnected()) {
                                     amountConnections++;
-                                    System.out.println("\n> Servidores vivos: " + "[" + (amountConnections+1) + "]\n");
-                                    ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
+                                    System.out.println("\n> Qtd. de servidores "
+                                            + "vivos: "
+                                            + (amountConnections + 1) + "\n"
+                                    );
+                                    
+                                    ObjectOutputStream output
+                                            = new ObjectOutputStream(
+                                                    socket.getOutputStream()
+                                            );
                                     output.flush();
                                     output.writeObject("POST /ping");
                                     output.flush();
 
-                                    ObjectOutputStream outputBody = new ObjectOutputStream(socket.getOutputStream());
+                                    ObjectOutputStream outputBody
+                                            = new ObjectOutputStream(
+                                                    socket.getOutputStream()
+                                            );
                                     outputBody.flush();
                                     outputBody.writeObject(companyName);
                                 }
@@ -130,21 +142,35 @@ public class Server {
                             }
                         }
 
+                        /* Caso o servidor coordenador esteja ofline, incia 
+                        uma nova eleição. */
                         try {
-                            if (coordinator != null && !coordinator.getCompanyName().equals(companyName)) {
+                            if (coordinator != null
+                                    && !coordinator.getCompanyName()
+                                            .equals(companyName)) {
                                 Socket socketCoordinator
                                         = new Socket(
                                                 coordinator.getIpAddress(),
                                                 coordinator.getPort()
                                         );
                                 if (socketCoordinator.isConnected()) {
-                                    ObjectOutputStream output = new ObjectOutputStream(socketCoordinator.getOutputStream());
+                                    ObjectOutputStream output
+                                            = new ObjectOutputStream(
+                                                    socketCoordinator
+                                                            .getOutputStream()
+                                            );
                                     output.flush();
                                     output.writeObject("GET /coordinatorAlive");
 
                                     ObjectInputStream inputBody
-                                            = new ObjectInputStream(socketCoordinator.getInputStream());
-                                    System.out.println("[Coordenador] O servidor da companhia " + ((String) inputBody.readObject()) + " vivo!");
+                                            = new ObjectInputStream(
+                                                    socketCoordinator
+                                                            .getInputStream()
+                                            );
+                                    System.out.println("[Coordenador] O "
+                                            + "servidor da companhia "
+                                            + ((String) inputBody.readObject())
+                                            + " vivo!");
                                 }
                             }
 
@@ -153,20 +179,37 @@ public class Server {
                             startElection();
                         } catch (ClassNotFoundException cnfe) {
                             System.err.println("A classe String não foi "
-                                        + "encontrada.");
-                                System.out.println(cnfe);
+                                    + "encontrada.");
+                            System.out.println(cnfe);
                         }
 
-                        if (serverStarted && amountConnections > 0 && !electionActive) {
+                        if (serverStarted
+                                && amountConnections > 0
+                                && !electionActive) {
                             coordinator = null;
+                            /* Inicia uma nova eleição quando o servidor é 
+                            inciado. */
                             startElection();
 
-                        } else if (coordinator != null && coordinator.getCompanyName().equals(companyName) && !electionActive) {
+                        } else if (coordinator != null
+                                && coordinator.getCompanyName()
+                                        .equals(companyName)
+                                && !electionActive) {
+                            /* Somente o servidor coordenador pode inciar uma 
+                            nova eleição de tempos em tempos. */
                             startElection();
 
                         } else if (amountConnections == 0) {
-                            coordinator = new ServerAddress(ipAddress, port, companyName);
-                            System.out.println("Sou o coordenador: " + coordinator.getCompanyName());
+                            /* Caso só tenha um servidor online, o mesmo é o 
+                            coordenador. */
+                            coordinator = new ServerAddress(
+                                    ipAddress,
+                                    port,
+                                    companyName
+                            );
+                            
+                            System.out.println("Sou o coordenador: "
+                                    + coordinator.getCompanyName());
                         }
 
                         serverStarted = false;
@@ -175,17 +218,17 @@ public class Server {
                         try {
                             Thread.sleep(ELECTION_TIME);
                         } catch (InterruptedException ie) {
-                            System.err.println("Thread finalizada de maneira "
-                                    + "inesperada.");
+                            System.err.println("Thread de eleição finalizada "
+                                    + "de maneira inesperada.");
                             System.out.println(ie);
                         }
                     }
                 }
             });
 
-            /* Finalizar a thread de requisição quando fechar o programa. */
+            /* Finalizar a thread de eleição quando fechar o programa. */
             thread.setDaemon(true);
-            /* Iniciar a thread de requisições. */
+            /* Iniciar a thread de eleição. */
             thread.start();
 
             System.out.println("> Aguardando conexão");
@@ -291,13 +334,22 @@ public class Server {
         isThreadCreated = true;
     }
 
+    /**
+     * Inicia uma nova eleição para definir o servidor coordenador.
+     */
     private synchronized static void startElection() {
         electionActive = true;
         int max = 0;
         int coordinatorIndex;
         List<Integer> amountRequests = new ArrayList<>();
+        List<Integer> indexList = new ArrayList<>();
+
+        /* Adicionando a quantidade de requisições deste próprio servidor. */
         amountRequests.add(requestsSize);
-        System.out.println("Quantidade de requisições da " + companyName + ": " + requestsSize);
+
+        System.out.println("Quantidade de requisições da " + companyName + ": "
+                + requestsSize);
+
         for (ServerAddress server : serverAddress) {
             try {
                 Socket socket
@@ -340,35 +392,46 @@ public class Server {
             }
         }
 
+        /* Encontra qual o maior número de requisições. */
         for (int i = 0; i < amountRequests.size(); i++) {
             if (max < amountRequests.get(i)) {
                 max = amountRequests.get(i);
             }
         }
 
-        List<Integer> indexList = new ArrayList<>();
+        /* Verifica quais servidores possuem a maior quantidade de 
+        requisições. */
         for (int i = 0; i < amountRequests.size(); i++) {
             if (max == amountRequests.get(i)) {
                 indexList.add(i);
             }
         }
 
+        /* Caso possua mais de um servidor com a maior quantidade de 
+        requisições, o coordenador é definido de maneira aleatória entre eles.*/
         if (indexList.size() > 1) {
-            coordinatorIndex = indexList.get(RandomUtil.generateInt(0, indexList.size()));
+            coordinatorIndex
+                    = indexList.get(RandomUtil.generateInt(0, indexList.size()));
         } else {
             coordinatorIndex = indexList.get(0);
         }
 
         setCoordinator(coordinatorIndex);
-
     }
 
+    /**
+     * Define o novo servidor coordenador.
+     *
+     * @param coordinatorIndex int - Índice do coordenador na lista de endereços
+     * servidores.
+     */
     private static void setCoordinator(int coordinatorIndex) {
         if (coordinatorIndex == 0) {
             coordinator = new ServerAddress(ipAddress, port, companyName);
         } else {
             coordinator = serverAddress.get(coordinatorIndex - 1);
         }
+
         for (ServerAddress server : serverAddress) {
             try {
                 Socket socket
