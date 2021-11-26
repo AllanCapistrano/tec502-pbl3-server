@@ -113,7 +113,7 @@ public class Server {
                                 if (socket.isConnected()) {
                                     amountConnections++;
                                     System.out.println("\n> Qtd. de servidores "
-                                            + "vivos: "
+                                            + "online: "
                                             + (amountConnections + 1) + "\n"
                                     );
                                     
