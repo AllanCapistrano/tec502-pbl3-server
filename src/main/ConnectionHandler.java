@@ -5,6 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.List;
+import models.Ticket;
 import models.ServerAddress;
 import models.Travel;
 import org.json.JSONObject;
@@ -87,6 +88,13 @@ public class ConnectionHandler implements Runnable {
                 this.sendRoutes(request[0], request[1]);
 
             } else if (httpRequest.equals("POST /buy")) {
+                System.out.println("> Rota: /buy");
+                System.out.println("\t Método: POST");
+
+                ObjectInputStream secondInput
+                        = new ObjectInputStream(connection.getInputStream());
+
+                Ticket ticket = (Ticket) secondInput.readObject();
 
             } else if (httpRequest.equals("POST /buy/authorization")) {
 
