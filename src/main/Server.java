@@ -9,13 +9,17 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Stack;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import models.Edge;
 import models.Graph;
 import models.Reader;
 import models.ServerAddress;
+import models.Ticket;
 import utils.RandomUtil;
 
 /**
@@ -27,19 +31,33 @@ import utils.RandomUtil;
 public class Server {
 
     /*-------------------------- Constantes ----------------------------------*/
-    private static final int AMOUNT_OF_PARTS = 10;
+    private static final int AMOUNT_OF_PARTS = 18;
     private static final int UNIFY_TIME = 30000;
     private static final int ELECTION_TIME = 10000;
+    private static final int BUY_TIME = 10000;
     /*------------------------------------------------------------------------*/
+
+    public static List<ServerAddress> serverAddress
+            = new ArrayList<ServerAddress>();
+    public static Graph graph = new Graph();
+    public static Graph unifiedGraph = new Graph();
+
+    public static List<Edge> routes = new ArrayList<>();
+
+//    public static List<Ticket> tickets = new ArrayList<>();
+    public static List<Ticket> tickets
+            = Collections.synchronizedList(new ArrayList());
+
+    /* NÃO VAI USAR */
+    public static List<Socket> interfaceClient
+            = Collections.synchronizedList(new ArrayList());
+
+    public static Stack<Edge> purchasesAccepted = new Stack<>();
 
     private static String ipAddress;
     private static int port;
     public static String companyName;
     private static ServerSocket server;
-    public static List<ServerAddress> serverAddress
-            = new ArrayList<ServerAddress>();
-    public static Graph graph = new Graph();
-    public static Graph unifiedGraph = new Graph();
     private static ArrayList<ConnectionHandler> connHandler = new ArrayList<>();
     private static ExecutorService pool = Executors.newCachedThreadPool();
     private static boolean isThreadCreated = false;
@@ -48,7 +66,6 @@ public class Server {
     public static volatile ServerAddress coordinator;
     public static volatile boolean electionActive = false;
     public static volatile boolean serverStarted = true;
-    public static volatile int requestsSize = RandomUtil.generateInt(0, 10);
     private static int amountConnections = 0;
 
     /*------------------------------------------------------------------------*/
@@ -95,6 +112,7 @@ public class Server {
             /* Montando o grafo */
             Reader reader = new Reader();
             reader.generateGraph(graph, companyName, AMOUNT_OF_PARTS);
+            routes.addAll(graph.getEdges());
 
             /* Thread para lidar com a eleição do coordenador. */
             Thread thread = new Thread(new Runnable() {
@@ -116,7 +134,7 @@ public class Server {
                                             + "online: "
                                             + (amountConnections + 1) + "\n"
                                     );
-                                    
+
                                     ObjectOutputStream output
                                             = new ObjectOutputStream(
                                                     socket.getOutputStream()
@@ -207,7 +225,7 @@ public class Server {
                                     port,
                                     companyName
                             );
-                            
+
                             System.out.println("Sou o coordenador: "
                                     + coordinator.getCompanyName());
                         }
@@ -231,12 +249,133 @@ public class Server {
             /* Iniciar a thread de eleição. */
             thread.start();
 
+            /* Thread para lidar com a compra das passagens. */
+            Thread threadBuy = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    while (true) {
+                        if (tickets.size() > 0) {
+                            int index = 0;
+                            for (Ticket ticket : tickets) {
+                                for (int i = 0; i < ticket.getListRoutes().size(); i++) {
+                                    if (coordinator != null && !coordinator.getCompanyName().equals(companyName)) {
+                                        if (ticket.getListRoutes().get(i).getCompanyName().equals(companyName)) {
+                                            for (Edge route : routes) {
+                                                if (route.equals(ticket.getListRoutes().get(i)) && route.getAmountSeat() > 0) {
+                                                    route.setAmountSeat(route.getAmountSeat() - 1);
+
+                                                    purchasesAccepted.push(route);
+
+                                                    System.out.println("> Compra do trecho " + route.getFirstCity().getCityName() + "->" + route.getSecondCity().getCityName() + " realziada com sucesso!");
+                                                }
+                                            }
+                                        } else {
+                                            for (ServerAddress server : serverAddress) {
+                                                if (ticket.getListRoutes().get(i).getCompanyName().equals(server.getCompanyName())) {
+                                                    try {
+                                                        Socket socket
+                                                                = new Socket(
+                                                                        server.getIpAddress(),
+                                                                        server.getPort()
+                                                                );
+
+                                                        if (socket.isConnected()) {
+                                                            ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
+
+                                                            output.flush();
+                                                            output.writeObject("POST /buy/authorization");
+                                                            output.flush();
+
+                                                            ObjectOutputStream outputBody = new ObjectOutputStream(socket.getOutputStream());
+
+                                                            outputBody.flush();
+                                                            output.writeObject(ticket.getListRoutes().get(i));
+                                                            outputBody.flush();
+
+                                                            ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
+
+                                                            String response = (String) input.readObject();
+
+                                                            if (response.equals("200")) {
+                                                                purchasesAccepted.push(ticket.getListRoutes().get(i));
+
+                                                                System.out.println("> Compra do trecho " + ticket.getListRoutes().get(i).getFirstCity().getCityName() + "->" + ticket.getListRoutes().get(i).getSecondCity().getCityName() + " realziada com sucesso!");
+                                                            } else if (response.equals("400")) {
+                                                                System.err.println("DEU RUIM!!!");
+                                                            }
+
+                                                            output.close();
+                                                            outputBody.close();
+                                                            input.close();
+                                                        }
+
+                                                        socket.close();
+                                                    } catch (IOException ioe) {
+                                                        System.err.println("Erro ao tentar se "
+                                                                + "comunicar com o servidor: "
+                                                                + server.getCompanyName()
+                                                        );
+                                                    } catch (ClassNotFoundException cnfe) {
+                                                        System.err.println("A classe String não foi encontrada.");
+                                                        System.out.println(cnfe);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                try {
+                                    ObjectOutputStream output
+                                            = new ObjectOutputStream(interfaceClient.get(index).getOutputStream());
+
+                                    if (purchasesAccepted.size() == ticket.getListRoutes().size()) {
+                                        output.flush();
+                                        output.writeObject("Compra realizada com sucesso! Obrigado pela preferência.");
+                                        output.flush();
+                                    } else {
+                                        output.flush();
+                                        output.writeObject("Não foi possível realizar a compra!");
+                                        output.flush();
+                                    }
+
+                                    output.close();
+
+                                    purchasesAccepted.removeAll(purchasesAccepted);
+                                } catch (IOException ioe) {
+                                    System.err.println("Não foi possível "
+                                            + "enviar a confirmação de "
+                                            + "compra do voo!");
+                                    System.out.println(ioe);
+                                }
+
+                                index++;
+                            }
+                        }
+
+                        try {
+                            Thread.sleep(BUY_TIME);
+                        } catch (InterruptedException ie) {
+                            System.err.println("Thread de compra das passagens "
+                                    + "finalizada de maneira inesperada.");
+                            System.out.println(ie);
+                        }
+                    }
+                }
+            });
+
+            /* Finalizar a thread de eleição quando fechar o programa. */
+            threadBuy.setDaemon(true);
+            /* Iniciar a thread de eleição. */
+            threadBuy.start();
+
             System.out.println("> Aguardando conexão");
 
             while (true) {
                 /* Serviço que lida com as requisições utilizando threads. */
                 ConnectionHandler connectionThread
                         = new ConnectionHandler(server.accept());
+
                 connHandler.add(connectionThread);
 
                 /* Executando as threads. */
@@ -345,10 +484,10 @@ public class Server {
         List<Integer> indexList = new ArrayList<>();
 
         /* Adicionando a quantidade de requisições deste próprio servidor. */
-        amountRequests.add(requestsSize);
+        amountRequests.add(tickets.size());
 
         System.out.println("Quantidade de requisições da " + companyName + ": "
-                + requestsSize);
+                + tickets.size());
 
         for (ServerAddress server : serverAddress) {
             try {
