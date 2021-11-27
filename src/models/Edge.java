@@ -39,6 +39,7 @@ public class Edge implements Serializable {
         this.secondCity = secondCity;
         this.timeTravel = timeTravel;
         this.companyName = companyName;
+        this.amountSeat = amountSeat;
 
         this.companyTariff
                 = RandomUtil.generateFloat((float) 5.05, (float) 10.21);
