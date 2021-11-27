@@ -286,13 +286,20 @@ public class ConnectionHandler implements Runnable {
         }
     }
 
+    /**
+     * Responsável pela compra de um trecho.
+     * 
+     * @param route Edge - 
+     */
     private void buyRoute(Edge route) {
         for (Edge r : Server.routes) {
             try {
                 if (r.equals(route) && r.getAmountSeat() > 0) {
-                    System.out.println("Qtd acentos antes: " + r.getAmountSeat());
+                    System.out.println("Qtd acentos antes: " 
+                            + r.getAmountSeat());
                     route.setAmountSeat(r.getAmountSeat() - 1);
-                    System.out.println("Qtd acentos depois: " + r.getAmountSeat());
+                    System.out.println("Qtd acentos depois: " 
+                            + r.getAmountSeat());
 
                     Socket coordinatorServer
                             = new Socket(
@@ -301,17 +308,21 @@ public class ConnectionHandler implements Runnable {
                             );
 
                     ObjectOutputStream output
-                            = new ObjectOutputStream(coordinatorServer.getOutputStream());
+                            = new ObjectOutputStream(
+                                    coordinatorServer.getOutputStream()
+                            );
 
-                    System.out.println("> Enviando o nome da companhia do "
-                            + "coordenador...");
+                    System.out.println("> Enviando a confirmação de compra do "
+                            + "trecho.");
 
                     output.flush();
                     output.writeObject("POST /send/authorization");
                     output.flush();
 
                     ObjectOutputStream outputBody
-                            = new ObjectOutputStream(coordinatorServer.getOutputStream());
+                            = new ObjectOutputStream(
+                                    coordinatorServer.getOutputStream()
+                            );
                     outputBody.flush();
                     outputBody.writeObject(r);
                     outputBody.flush();
