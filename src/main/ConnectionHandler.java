@@ -93,23 +93,45 @@ public class ConnectionHandler implements Runnable {
                 ObjectInputStream secondInput
                         = new ObjectInputStream(connection.getInputStream());
 
-
                 /* Adicionando a compra da passagem no final da fila de 
                 passagens. */
                 Server.tickets.add((Ticket) secondInput.readObject());
+
                 /* NÃO VAI USAR */
-                Server.interfaceClient.add(connection);
+                Server.interfaceClient.add(connection.getOutputStream());
 
             } else if (httpRequest.equals("POST /buy/authorization")) {
-                System.out.println("> Rota: /authorization");
+                System.out.println("> Rota: /buy/authorization");
                 System.out.println("\t Método: POST");
 
                 ObjectInputStream secondInput
                         = new ObjectInputStream(connection.getInputStream());
 
-                /* VER SE PRECISA MUDAR O NOME DO MÉTODO */
-                this.buyRoute((Edge) secondInput.readObject());
+                Edge e = (Edge) secondInput.readObject();
 
+                /* VER SE PRECISA MUDAR O NOME DO MÉTODO */
+                this.buyRoute(e);
+
+            } else if (httpRequest.equals("POST /send/authorization")) {
+                System.out.println("> Rota: /send/authorization");
+                System.out.println("\t Método: POST");
+
+                ObjectInputStream secondInput
+                        = new ObjectInputStream(connection.getInputStream());
+
+                Edge route = (Edge) secondInput.readObject();
+
+                if (route != null) {
+                    Server.purchasesAccepted.push(route);
+
+                    System.out.println("> Compra do trecho "
+                            + route.getFirstCity().getCityName() + " -> "
+                            + route.getSecondCity().getCityName()
+                            + " realziada com sucesso!");
+                } else {
+                    /* TO DO */
+                    System.err.println("DEU RUIM!!!");
+                }
             } else if (httpRequest.equals("GET /graph")) {
                 System.out.println("> Rota: /graph");
                 System.out.println("\t Método: GET");
@@ -267,36 +289,73 @@ public class ConnectionHandler implements Runnable {
     private void buyRoute(Edge route) {
         for (Edge r : Server.routes) {
             try {
-                ObjectOutputStream output
-                        = new ObjectOutputStream(connection.getOutputStream());
                 if (r.equals(route) && r.getAmountSeat() > 0) {
-                    r.setAmountSeat(r.getAmountSeat() - 1);
+                    System.out.println("Qtd acentos antes: " + r.getAmountSeat());
+                    route.setAmountSeat(r.getAmountSeat() - 1);
+                    System.out.println("Qtd acentos depois: " + r.getAmountSeat());
 
-                    System.out.println("> Enviando a confirmação de compra do "
-                            + "trecho.");
+                    Socket coordinatorServer
+                            = new Socket(
+                                    Server.coordinator.getIpAddress(),
+                                    Server.coordinator.getPort()
+                            );
+
+                    ObjectOutputStream output
+                            = new ObjectOutputStream(coordinatorServer.getOutputStream());
+
+                    System.out.println("> Enviando o nome da companhia do "
+                            + "coordenador...");
 
                     output.flush();
-                    output.writeObject("200");
+                    output.writeObject("POST /send/authorization");
                     output.flush();
+
+                    ObjectOutputStream outputBody
+                            = new ObjectOutputStream(coordinatorServer.getOutputStream());
+                    outputBody.flush();
+                    outputBody.writeObject(r);
+                    outputBody.flush();
 
                     output.close();
+                    outputBody.close();
 
                     break;
                 } else if (r.getAmountSeat() < 0) {
-                    System.out.println("> Não foi possível realizar a compra do "
-                            + "trecho solicitado.");
+                    System.out.println("> Não foi possível realizar a compra "
+                            + "do trecho solicitado.");
+
+                    Socket coordinatorServer
+                            = new Socket(
+                                    Server.coordinator.getIpAddress(),
+                                    Server.coordinator.getPort()
+                            );
+
+                    ObjectOutputStream output
+                            = new ObjectOutputStream(
+                                    coordinatorServer.getOutputStream()
+                            );
 
                     output.flush();
-                    output.writeObject("400");
+                    output.writeObject("POST /send/authorization");
                     output.flush();
+
+                    ObjectOutputStream outputBody
+                            = new ObjectOutputStream(
+                                    coordinatorServer.getOutputStream()
+                            );
+
+                    outputBody.flush();
+                    outputBody.writeObject(null);
+                    outputBody.flush();
 
                     output.close();
+                    outputBody.close();
 
                     break;
                 }
             } catch (IOException ioe) {
-                System.err.println("Erro ao tentar enviar o nome da companhia do "
-                        + "coordenador.");
+                System.err.println("Erro ao tentar enviar a confirmação de "
+                        + "compra do trecho para o servidor coordenador.");
                 System.out.println(ioe);
             }
         }
