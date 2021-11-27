@@ -3,6 +3,7 @@ package main;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.BindException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -47,16 +48,14 @@ public class Server {
 //    public static List<Ticket> tickets = new ArrayList<>();
     public static List<Ticket> tickets
             = Collections.synchronizedList(new ArrayList());
-
     /* NÃO VAI USAR */
-    public static List<Socket> interfaceClient
+    public static List<OutputStream> interfaceClient
             = Collections.synchronizedList(new ArrayList());
-
     public static Stack<Edge> purchasesAccepted = new Stack<>();
+    public static String companyName;
 
     private static String ipAddress;
     private static int port;
-    public static String companyName;
     private static ServerSocket server;
     private static ArrayList<ConnectionHandler> connHandler = new ArrayList<>();
     private static ExecutorService pool = Executors.newCachedThreadPool();
@@ -255,23 +254,24 @@ public class Server {
                 public void run() {
                     while (true) {
                         if (tickets.size() > 0) {
-                            int index = 0;
                             for (Ticket ticket : tickets) {
                                 for (int i = 0; i < ticket.getListRoutes().size(); i++) {
-                                    if (coordinator != null && !coordinator.getCompanyName().equals(companyName)) {
-                                        if (ticket.getListRoutes().get(i).getCompanyName().equals(companyName)) {
+                                    if (coordinator != null && coordinator.getCompanyName().equals(companyName)) {
+                                        if (ticket.getListCompanyNames().get(i).equals(companyName)) {
                                             for (Edge route : routes) {
                                                 if (route.equals(ticket.getListRoutes().get(i)) && route.getAmountSeat() > 0) {
+                                                    System.out.println("Qtd acentos antes: " + route.getAmountSeat());
                                                     route.setAmountSeat(route.getAmountSeat() - 1);
+                                                    System.out.println("Qtd acentos depois: " + route.getAmountSeat());
 
                                                     purchasesAccepted.push(route);
 
-                                                    System.out.println("> Compra do trecho " + route.getFirstCity().getCityName() + "->" + route.getSecondCity().getCityName() + " realziada com sucesso!");
+                                                    System.out.println("> Compra do trecho " + route.getFirstCity().getCityName() + " -> " + route.getSecondCity().getCityName() + " realziada com sucesso!");
                                                 }
                                             }
                                         } else {
                                             for (ServerAddress server : serverAddress) {
-                                                if (ticket.getListRoutes().get(i).getCompanyName().equals(server.getCompanyName())) {
+                                                if (ticket.getListCompanyNames().get(i).equals(server.getCompanyName())) {
                                                     try {
                                                         Socket socket
                                                                 = new Socket(
@@ -289,24 +289,11 @@ public class Server {
                                                             ObjectOutputStream outputBody = new ObjectOutputStream(socket.getOutputStream());
 
                                                             outputBody.flush();
-                                                            output.writeObject(ticket.getListRoutes().get(i));
+                                                            outputBody.writeObject(ticket.getListRoutes().get(i));
                                                             outputBody.flush();
-
-                                                            ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
-
-                                                            String response = (String) input.readObject();
-
-                                                            if (response.equals("200")) {
-                                                                purchasesAccepted.push(ticket.getListRoutes().get(i));
-
-                                                                System.out.println("> Compra do trecho " + ticket.getListRoutes().get(i).getFirstCity().getCityName() + "->" + ticket.getListRoutes().get(i).getSecondCity().getCityName() + " realziada com sucesso!");
-                                                            } else if (response.equals("400")) {
-                                                                System.err.println("DEU RUIM!!!");
-                                                            }
 
                                                             output.close();
                                                             outputBody.close();
-                                                            input.close();
                                                         }
 
                                                         socket.close();
@@ -315,41 +302,29 @@ public class Server {
                                                                 + "comunicar com o servidor: "
                                                                 + server.getCompanyName()
                                                         );
-                                                    } catch (ClassNotFoundException cnfe) {
-                                                        System.err.println("A classe String não foi encontrada.");
-                                                        System.out.println(cnfe);
                                                     }
                                                 }
                                             }
                                         }
                                     }
                                 }
-                                
-                                try {
-                                    ObjectOutputStream output
-                                            = new ObjectOutputStream(interfaceClient.get(index).getOutputStream());
 
-                                    if (purchasesAccepted.size() == ticket.getListRoutes().size()) {
-                                        output.flush();
-                                        output.writeObject("Compra realizada com sucesso! Obrigado pela preferência.");
-                                        output.flush();
-                                    } else {
-                                        output.flush();
-                                        output.writeObject("Não foi possível realizar a compra!");
-                                        output.flush();
+                                if (coordinator != null && coordinator.getCompanyName().equals(companyName)) {
+                                    while (purchasesAccepted.size() < ticket.getListRoutes().size()) {
+                                        /* colocar flag para sair do while caso a compra não seja autorizada */
+                                        
+                                        
+                                        /* Laço para espera da autorização da compra de trechos de outras companhias */
                                     }
 
-                                    output.close();
-
                                     purchasesAccepted.removeAll(purchasesAccepted);
-                                } catch (IOException ioe) {
-                                    System.err.println("Não foi possível "
-                                            + "enviar a confirmação de "
-                                            + "compra do voo!");
-                                    System.out.println(ioe);
+                                } else {
+                                    break;
                                 }
+                            }
 
-                                index++;
+                            if (coordinator != null && coordinator.getCompanyName().equals(companyName)) {
+                                tickets.removeAll(tickets);
                             }
                         }
 
