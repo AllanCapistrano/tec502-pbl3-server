@@ -63,6 +63,8 @@ public class ConnectionHandler implements Runnable {
         System.out.println("> Processando a requisição");
 
         try {
+            /* Recebe uma solicitação para o envio das possíveis rotas entre 
+            a cidade de origem e a de destino. */
             if (httpRequest.equals("GET /routes")) {
                 System.out.println("> Rota: /routes");
                 System.out.println("\t Método: GET");
@@ -86,6 +88,7 @@ public class ConnectionHandler implements Runnable {
 
                 this.sendRoutes(request[0], request[1]);
 
+            /* Recebe uma solicitação de compra de passagem. */
             } else if (httpRequest.equals("POST /buy")) {
                 System.out.println("> Rota: /buy");
                 System.out.println("\t Método: POST");
@@ -100,6 +103,7 @@ public class ConnectionHandler implements Runnable {
                 /* NÃO VAI USAR */
                 Server.interfaceClient.add(connection.getOutputStream());
 
+            /* Recebe um trecho que deve ser autorizado. */
             } else if (httpRequest.equals("POST /buy/authorization")) {
                 System.out.println("> Rota: /buy/authorization");
                 System.out.println("\t Método: POST");
@@ -112,6 +116,7 @@ public class ConnectionHandler implements Runnable {
                 /* VER SE PRECISA MUDAR O NOME DO MÉTODO */
                 this.buyRoute(e);
 
+            /* Recebe a autorização do trecho de interesse. */
             } else if (httpRequest.equals("POST /send/authorization")) {
                 System.out.println("> Rota: /send/authorization");
                 System.out.println("\t Método: POST");
@@ -132,12 +137,15 @@ public class ConnectionHandler implements Runnable {
                     /* TO DO */
                     System.err.println("DEU RUIM!!!");
                 }
+                
+            /* Recebe um pedido de envio do grafo do servidor da companhia. */
             } else if (httpRequest.equals("GET /graph")) {
                 System.out.println("> Rota: /graph");
                 System.out.println("\t Método: GET");
 
                 this.sendGraph();
 
+            /* Recebe uma solicitação indicando que uma eleição foi iniciada. */
             } else if (httpRequest.equals("GET /startElection")) {
                 System.out.println("> Rota: /startElection");
                 System.out.println("\t Método: GET");
@@ -146,7 +154,8 @@ public class ConnectionHandler implements Runnable {
                 Server.electionActive = true;
 
                 this.sendAmountRequests();
-
+            
+            /* Recebe uma requisição informando o novo coordenador do sistema. */
             } else if (httpRequest.equals("POST /coordinator")) {
                 System.out.println("> Rota: /coordinator");
                 System.out.println("\t Método: POST");
@@ -161,6 +170,8 @@ public class ConnectionHandler implements Runnable {
                 System.out.println("Novo coordenador: "
                         + Server.coordinator.getCompanyName());
 
+            /* Recebe uma requisição informando que o servidor de outra 
+                companhia está vivo. */    
             } else if (httpRequest.equals("POST /ping")) {
                 System.out.println("> Rota: /ping");
                 System.out.println("\t Método: POST");
@@ -170,7 +181,9 @@ public class ConnectionHandler implements Runnable {
 
                 System.out.println("O servidor da companhia "
                         + ((String) inputBody.readObject()) + " vivo!");
-
+            
+            /* Recebe uma requisição, perguntando se o servidor coordenador 
+                está vivo. */
             } else if (httpRequest.equals("GET /coordinatorAlive")) {
                 System.out.println("> Rota: /coordinatorAlive");
                 System.out.println("\t Método: GET");
