@@ -37,20 +37,23 @@ public class Server {
     private static final int BUY_TIME = 10000;
     /*------------------------------------------------------------------------*/
 
-    public static List<ServerAddress> serverAddress
-            = new ArrayList<ServerAddress>();
     public static Graph graph = new Graph();
     public static Graph unifiedGraph = new Graph();
-
+    public static String companyName;
+    
+    public static volatile boolean purchaseFlag = true;
+    
+    public static List<ServerAddress> serverAddress
+            = new ArrayList<ServerAddress>();
     public static List<Edge> routes = new ArrayList<>();
-
     public static List<Ticket> tickets
             = Collections.synchronizedList(new ArrayList());
     public static List<Socket> interfaceClients
             = Collections.synchronizedList(new ArrayList());
+   
     public static Stack<Edge> purchasesAccepted = new Stack<>();
-    public static String companyName;
-
+    public static Stack<Edge> purchasesDenied = new Stack<>();
+    
     private static String ipAddress;
     private static int port;
     private static ServerSocket server;
@@ -63,8 +66,8 @@ public class Server {
     public static volatile boolean electionActive = false;
     public static volatile boolean serverStarted = true;
     private static int amountConnections = 0;
-
     /*------------------------------------------------------------------------*/
+    
     public static void main(String[] args)
             throws IOException, ClassNotFoundException {
         Scanner keyboardInput = new Scanner(System.in);
@@ -263,9 +266,18 @@ public class Server {
                                                     route.setAmountSeat(route.getAmountSeat() - 1);
                                                     System.out.println("Qtd acentos depois: " + route.getAmountSeat());
 
+                                                    /* Adicionando a compra na pilha de compras realizadas com sucesso. */
                                                     purchasesAccepted.push(route);
 
                                                     System.out.println("> Compra do trecho " + route.getFirstCity().getCityName() + " -> " + route.getSecondCity().getCityName() + " realziada com sucesso!");
+                                                } else if (route.equals(ticket.getListRoutes().get(i)) && route.getAmountSeat() == 0) {
+                                                    System.out.println("Qtd acentos antes: " + route.getAmountSeat());
+
+                                                    /* Adicionando a compra na pilha de compras que não foram realizadas. */
+                                                    purchasesDenied.push(route);
+                                                    purchaseFlag = false;
+
+                                                    System.out.println("> Não foi possível comprar o trecho " + route.getFirstCity().getCityName() + " -> " + route.getSecondCity().getCityName());
                                                 }
                                             }
                                         } else {
@@ -309,17 +321,21 @@ public class Server {
                                 }
 
                                 if (coordinator != null && coordinator.getCompanyName().equals(companyName)) {
-                                    while (purchasesAccepted.size() < ticket.getListRoutes().size()) {
+                                    while ((purchasesAccepted.size() + purchasesDenied.size()) < ticket.getListRoutes().size()) {
                                         /* colocar flag para sair do while caso a compra não seja autorizada */
 
                                         /* Laço para espera da autorização da compra de trechos de outras companhias */
-                                    }
-
+                                    } 
+                                    
                                     try {
                                         ObjectOutputStream output = new ObjectOutputStream(interfaceClients.get(index).getOutputStream());
-
+                                        
                                         output.flush();
-                                        output.writeObject("COMPRA REALIZADA COM SUCESSO!!!!");
+                                        output.writeObject(purchaseFlag);
+                                        
+                                        if (!purchaseFlag) {
+                                            purchaseFlag = true;
+                                        }
 
                                         output.close();
                                     } catch (IOException ioe) {
@@ -328,6 +344,7 @@ public class Server {
                                     }
 
                                     purchasesAccepted.removeAll(purchasesAccepted);
+                                    purchasesDenied.removeAll(purchasesDenied);
                                 } else {
                                     break;
                                 }
