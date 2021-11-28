@@ -84,7 +84,7 @@ public class ConnectionHandler implements Runnable {
 
                 this.sendRoutes(request[0], request[1]);
 
-            /* Recebe uma solicitação de compra de passagem. */
+                /* Recebe uma solicitação de compra de passagem. */
             } else if (httpRequest.equals("POST /buy")) {
                 System.out.println("> Rota: /buy");
                 System.out.println("\t Método: POST");
@@ -99,7 +99,7 @@ public class ConnectionHandler implements Runnable {
                 /* Adicionando a conexão */
                 Server.interfaceClients.add(connection);
 
-            /* Recebe um trecho que deve ser autorizado. */
+                /* Recebe um trecho que deve ser autorizado. */
             } else if (httpRequest.equals("POST /buy/authorization")) {
                 System.out.println("> Rota: /buy/authorization");
                 System.out.println("\t Método: POST");
@@ -112,7 +112,7 @@ public class ConnectionHandler implements Runnable {
                 /* VER SE PRECISA MUDAR O NOME DO MÉTODO */
                 this.buyRoute(e);
 
-            /* Recebe a autorização do trecho de interesse. */
+                /* Recebe a autorização do trecho de interesse. */
             } else if (httpRequest.equals("POST /send/authorization")) {
                 System.out.println("> Rota: /send/authorization");
                 System.out.println("\t Método: POST");
@@ -123,6 +123,7 @@ public class ConnectionHandler implements Runnable {
                 Edge route = (Edge) secondInput.readObject();
 
                 if (route != null) {
+                    /* Adicionando a compra na pilha de compras realizadas com sucesso. */
                     Server.purchasesAccepted.push(route);
 
                     System.out.println("> Compra do trecho "
@@ -132,16 +133,21 @@ public class ConnectionHandler implements Runnable {
                 } else {
                     /* TO DO */
                     System.err.println("DEU RUIM!!!");
+                    
+                    /* Adicionando a compra na pilha de compras que não foram realizadas. */
+                    Server.purchasesDenied.push(route);
+                    /* Marcando que não foi possível realizar uma compra. */
+                    Server.purchaseFlag = false;
                 }
-                
-            /* Recebe um pedido de envio do grafo do servidor da companhia. */
+
+                /* Recebe um pedido de envio do grafo do servidor da companhia. */
             } else if (httpRequest.equals("GET /graph")) {
                 System.out.println("> Rota: /graph");
                 System.out.println("\t Método: GET");
 
                 this.sendGraph();
 
-            /* Recebe uma solicitação indicando que uma eleição foi iniciada. */
+                /* Recebe uma solicitação indicando que uma eleição foi iniciada. */
             } else if (httpRequest.equals("GET /startElection")) {
                 System.out.println("> Rota: /startElection");
                 System.out.println("\t Método: GET");
@@ -150,8 +156,8 @@ public class ConnectionHandler implements Runnable {
                 Server.electionActive = true;
 
                 this.sendAmountRequests();
-            
-            /* Recebe uma requisição informando o novo coordenador do sistema. */
+
+                /* Recebe uma requisição informando o novo coordenador do sistema. */
             } else if (httpRequest.equals("POST /coordinator")) {
                 System.out.println("> Rota: /coordinator");
                 System.out.println("\t Método: POST");
@@ -166,8 +172,8 @@ public class ConnectionHandler implements Runnable {
                 System.out.println("Novo coordenador: "
                         + Server.coordinator.getCompanyName());
 
-            /* Recebe uma requisição informando que o servidor de outra 
-                companhia está vivo. */    
+                /* Recebe uma requisição informando que o servidor de outra 
+                companhia está vivo. */
             } else if (httpRequest.equals("POST /ping")) {
                 System.out.println("> Rota: /ping");
                 System.out.println("\t Método: POST");
@@ -177,8 +183,8 @@ public class ConnectionHandler implements Runnable {
 
                 System.out.println("O servidor da companhia "
                         + ((String) inputBody.readObject()) + " vivo!");
-            
-            /* Recebe uma requisição, perguntando se o servidor coordenador 
+
+                /* Recebe uma requisição, perguntando se o servidor coordenador 
                 está vivo. */
             } else if (httpRequest.equals("GET /coordinatorAlive")) {
                 System.out.println("> Rota: /coordinatorAlive");
@@ -297,17 +303,17 @@ public class ConnectionHandler implements Runnable {
 
     /**
      * Responsável pela compra de um trecho.
-     * 
-     * @param route Edge - 
+     *
+     * @param route Edge -
      */
     private void buyRoute(Edge route) {
         for (Edge r : Server.routes) {
             try {
                 if (r.equals(route) && r.getAmountSeat() > 0) {
-                    System.out.println("Qtd acentos antes: " 
+                    System.out.println("Qtd acentos antes: "
                             + r.getAmountSeat());
-                    route.setAmountSeat(r.getAmountSeat() - 1);
-                    System.out.println("Qtd acentos depois: " 
+                    r.setAmountSeat(r.getAmountSeat() - 1);
+                    System.out.println("Qtd acentos depois: "
                             + r.getAmountSeat());
 
                     Socket coordinatorServer
@@ -340,9 +346,11 @@ public class ConnectionHandler implements Runnable {
                     outputBody.close();
 
                     break;
-                } else if (r.getAmountSeat() < 0) {
-                    System.out.println("> Não foi possível realizar a compra "
-                            + "do trecho solicitado.");
+                } else if (r.equals(route) && r.getAmountSeat() == 0) {
+                    System.out.println("> Não foi possível comprar o trecho "
+                            + r.getFirstCity().getCityName() + " -> "
+                            + r.getSecondCity().getCityName()
+                    );
 
                     Socket coordinatorServer
                             = new Socket(
