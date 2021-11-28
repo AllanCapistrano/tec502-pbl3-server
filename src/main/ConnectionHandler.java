@@ -41,10 +41,6 @@ public class ConnectionHandler implements Runnable {
 
             /* Processandos a requisição. */
             this.processRequests(this.received);
-
-            /* Finalizando as conexões. */
-            input.close();
-            connection.close();
         } catch (IOException ioe) {
             System.err.println("Erro de Entrada/Saída.");
             System.out.println(ioe);
@@ -100,8 +96,8 @@ public class ConnectionHandler implements Runnable {
                 passagens. */
                 Server.tickets.add((Ticket) secondInput.readObject());
 
-                /* NÃO VAI USAR */
-                Server.interfaceClient.add(connection.getOutputStream());
+                /* Adicionando a conexão */
+                Server.interfaceClients.add(connection);
 
             /* Recebe um trecho que deve ser autorizado. */
             } else if (httpRequest.equals("POST /buy/authorization")) {

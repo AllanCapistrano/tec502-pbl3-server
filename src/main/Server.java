@@ -3,7 +3,6 @@ package main;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.net.BindException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -45,11 +44,9 @@ public class Server {
 
     public static List<Edge> routes = new ArrayList<>();
 
-//    public static List<Ticket> tickets = new ArrayList<>();
     public static List<Ticket> tickets
             = Collections.synchronizedList(new ArrayList());
-    /* NÃO VAI USAR */
-    public static List<OutputStream> interfaceClient
+    public static List<Socket> interfaceClients
             = Collections.synchronizedList(new ArrayList());
     public static Stack<Edge> purchasesAccepted = new Stack<>();
     public static String companyName;
@@ -254,6 +251,8 @@ public class Server {
                 public void run() {
                     while (true) {
                         if (tickets.size() > 0) {
+                            int index = 0;
+
                             for (Ticket ticket : tickets) {
                                 for (int i = 0; i < ticket.getListRoutes().size(); i++) {
                                     if (coordinator != null && coordinator.getCompanyName().equals(companyName)) {
@@ -312,19 +311,33 @@ public class Server {
                                 if (coordinator != null && coordinator.getCompanyName().equals(companyName)) {
                                     while (purchasesAccepted.size() < ticket.getListRoutes().size()) {
                                         /* colocar flag para sair do while caso a compra não seja autorizada */
-                                        
-                                        
+
                                         /* Laço para espera da autorização da compra de trechos de outras companhias */
+                                    }
+
+                                    try {
+                                        ObjectOutputStream output = new ObjectOutputStream(interfaceClients.get(index).getOutputStream());
+
+                                        output.flush();
+                                        output.writeObject("COMPRA REALIZADA COM SUCESSO!!!!");
+
+                                        output.close();
+                                    } catch (IOException ioe) {
+                                        System.err.println("Não foi possível se comunicar de volta com a interface.");
+                                        System.out.println(ioe);
                                     }
 
                                     purchasesAccepted.removeAll(purchasesAccepted);
                                 } else {
                                     break;
                                 }
+
+                                index++;
                             }
 
                             if (coordinator != null && coordinator.getCompanyName().equals(companyName)) {
                                 tickets.removeAll(tickets);
+                                interfaceClients.removeAll(interfaceClients);
                             }
                         }
 
