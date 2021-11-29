@@ -264,22 +264,22 @@ public class Server {
                                         if (ticket.getListCompanyNames().get(i).equals(companyName)) {
                                             for (Edge route : routes) {
                                                 if (route.equals(ticket.getListRoutes().get(i)) && route.getAmountSeat() > 0) {
-                                                    System.out.println("Qtd acentos antes: " + route.getAmountSeat());
+                                                    System.out.println("> Compra do trecho " + route.getFirstCity().getCityName() + " -> " + route.getSecondCity().getCityName() + " realziada com sucesso!");
+                                                    System.out.println("Qtd assentos antes: " + route.getAmountSeat());
                                                     route.setAmountSeat(route.getAmountSeat() - 1);
-                                                    System.out.println("Qtd acentos depois: " + route.getAmountSeat());
+                                                    System.out.println("Qtd assentos depois: " + route.getAmountSeat());
 
                                                     /* Adicionando a compra na pilha de compras realizadas com sucesso. */
                                                     purchasesAccepted.push(route);
 
-                                                    System.out.println("> Compra do trecho " + route.getFirstCity().getCityName() + " -> " + route.getSecondCity().getCityName() + " realziada com sucesso!");
                                                 } else if (route.equals(ticket.getListRoutes().get(i)) && route.getAmountSeat() == 0) {
-                                                    System.out.println("Qtd acentos antes: " + route.getAmountSeat());
+                                                    System.out.println("> Não foi possível comprar o trecho " + route.getFirstCity().getCityName() + " -> " + route.getSecondCity().getCityName());
+                                                    System.out.println("Qtd assentos: " + route.getAmountSeat());
 
                                                     /* Adicionando a compra na pilha de compras que não foram realizadas. */
                                                     purchasesDenied.push(route);
                                                     purchaseFlag = false;
 
-                                                    System.out.println("> Não foi possível comprar o trecho " + route.getFirstCity().getCityName() + " -> " + route.getSecondCity().getCityName());
                                                 }
                                             }
                                         } else {
@@ -324,9 +324,7 @@ public class Server {
 
                                 if (coordinator != null && coordinator.getCompanyName().equals(companyName)) {
                                     while ((purchasesAccepted.size() + purchasesDenied.size()) < ticket.getListRoutes().size()) {
-                                        /* colocar flag para sair do while caso a compra não seja autorizada */
-
- /* Laço para espera da autorização da compra de trechos de outras companhias */
+                                        /* Laço para espera da autorização da compra de trechos de outras companhias */
                                     }
 
                                     try {

@@ -131,9 +131,7 @@ public class ConnectionHandler implements Runnable {
                             + route.getSecondCity().getCityName()
                             + " realziada com sucesso!");
                 } else {
-                    /* TO DO */
-                    System.err.println("DEU RUIM!!!");
-
+                    System.out.println("> Não foi possível comprar o trecho " + route.getFirstCity().getCityName() + " -> " + route.getSecondCity().getCityName());
                     /* Adicionando a compra na pilha de compras que não foram realizadas. */
                     Server.purchasesDenied.push(route);
                     /* Marcando que não foi possível realizar uma compra. */
@@ -164,19 +162,19 @@ public class ConnectionHandler implements Runnable {
 
                 ObjectInputStream secondInput
                         = new ObjectInputStream(connection.getInputStream());
-                
+
                 String oldCoordinator = "";
-                if(Server.coordinator != null){
+                if (Server.coordinator != null) {
                     oldCoordinator = Server.coordinator.getCompanyName();
                 }
-                
+
                 Server.coordinator
                         = (ServerAddress) secondInput.readObject();
-                
-                if(Server.coordinator.getCompanyName().equals(Server.companyName) && oldCoordinator.equals(Server.companyName)){
+
+                if (Server.coordinator.getCompanyName().equals(Server.companyName) && oldCoordinator.equals(Server.companyName)) {
                     Server.numberTimesCoordinator++;
                 }
-                
+
                 Server.electionActive = false;
 
                 System.out.println("Novo coordenador: "
@@ -293,10 +291,10 @@ public class ConnectionHandler implements Runnable {
             System.out.println("> Enviando a quantidade de requisições...");
 
             output.flush();
-            if(Server.numberTimesCoordinator == Server.MAX_NUMBER_TIMES_COORDINATOR){
+            if (Server.numberTimesCoordinator == Server.MAX_NUMBER_TIMES_COORDINATOR) {
                 output.writeObject(0);
                 Server.numberTimesCoordinator = 0;
-            } else{
+            } else {
                 output.writeObject(Server.tickets.size());
             }
             output.flush();
@@ -341,10 +339,10 @@ public class ConnectionHandler implements Runnable {
         for (Edge r : Server.routes) {
             try {
                 if (r.equals(route) && r.getAmountSeat() > 0) {
-                    System.out.println("Qtd acentos antes: "
+                    System.out.println("Qtd assentos antes: "
                             + r.getAmountSeat());
                     r.setAmountSeat(r.getAmountSeat() - 1);
-                    System.out.println("Qtd acentos depois: "
+                    System.out.println("Qtd assentos depois: "
                             + r.getAmountSeat());
 
                     Socket coordinatorServer
