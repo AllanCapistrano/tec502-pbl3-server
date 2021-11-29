@@ -165,8 +165,14 @@ public class ConnectionHandler implements Runnable {
                 ObjectInputStream secondInput
                         = new ObjectInputStream(connection.getInputStream());
 
+                String oldCoordinator = Server.coordinator.getCompanyName();
                 Server.coordinator
                         = (ServerAddress) secondInput.readObject();
+                
+                if(Server.coordinator.getCompanyName().equals(Server.companyName) && oldCoordinator.equals(Server.companyName)){
+                    Server.numberTimesCoordinator++;
+                }
+                
                 Server.electionActive = false;
 
                 System.out.println("Novo coordenador: "
@@ -283,7 +289,12 @@ public class ConnectionHandler implements Runnable {
             System.out.println("> Enviando a quantidade de requisições...");
 
             output.flush();
-            output.writeObject(Server.tickets.size());
+            if(Server.numberTimesCoordinator == Server.MAX_NUMBER_TIMES_COORDINATOR){
+                output.writeObject(0);
+                Server.numberTimesCoordinator = 0;
+            } else{
+                output.writeObject(Server.tickets.size());
+            }
             output.flush();
 
             output.close();

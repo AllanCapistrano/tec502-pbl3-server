@@ -35,6 +35,7 @@ public class Server {
     private static final int UNIFY_TIME = 30000;
     private static final int ELECTION_TIME = 10000;
     private static final int BUY_TIME = 10000;
+    public static final int MAX_NUMBER_TIMES_COORDINATOR = 3;
     /*------------------------------------------------------------------------*/
 
     public static Graph graph = new Graph();
@@ -65,10 +66,10 @@ public class Server {
     public static volatile ServerAddress coordinator;
     public static volatile boolean electionActive = false;
     public static volatile boolean serverStarted = true;
+    public static int numberTimesCoordinator = 0;
     private static int amountConnections = 0;
 
     /*------------------------------------------------------------------------*/
-
     public static void main(String[] args)
             throws IOException, ClassNotFoundException {
         Scanner keyboardInput = new Scanner(System.in);
