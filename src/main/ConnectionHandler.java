@@ -133,7 +133,7 @@ public class ConnectionHandler implements Runnable {
                 } else {
                     /* TO DO */
                     System.err.println("DEU RUIM!!!");
-                    
+
                     /* Adicionando a compra na pilha de compras que não foram realizadas. */
                     Server.purchasesDenied.push(route);
                     /* Marcando que não foi possível realizar uma compra. */
@@ -192,6 +192,22 @@ public class ConnectionHandler implements Runnable {
 
                 if (Server.coordinator.getCompanyName().equals(Server.companyName)) {
                     this.sendCoordinatorCompanyName();
+                }
+
+                /* Recebe uma requisição para o cancelamento de compra do trecho. */
+            } else if (httpRequest.equals("POST /buy/cancel")) {
+                System.out.println("> Rota: /buy/cancel");
+                System.out.println("\t Método: POST");
+
+                ObjectInputStream inputBody
+                        = new ObjectInputStream(connection.getInputStream());
+
+                Edge route = (Edge) inputBody.readObject();
+
+                for (int i = 0; i < Server.routes.size(); i++) {
+                    if (Server.routes.get(i).equals(route)) {
+                        Server.routes.get(i).setAmountSeat(Server.routes.get(i).getAmountSeat() + 1);
+                    }
                 }
             }
         } catch (IOException ioe) {

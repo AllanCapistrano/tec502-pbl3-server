@@ -40,9 +40,9 @@ public class Server {
     public static Graph graph = new Graph();
     public static Graph unifiedGraph = new Graph();
     public static String companyName;
-    
+
     public static volatile boolean purchaseFlag = true;
-    
+
     public static List<ServerAddress> serverAddress
             = new ArrayList<ServerAddress>();
     public static List<Edge> routes = new ArrayList<>();
@@ -50,10 +50,10 @@ public class Server {
             = Collections.synchronizedList(new ArrayList());
     public static List<Socket> interfaceClients
             = Collections.synchronizedList(new ArrayList());
-   
+
     public static Stack<Edge> purchasesAccepted = new Stack<>();
     public static Stack<Edge> purchasesDenied = new Stack<>();
-    
+
     private static String ipAddress;
     private static int port;
     private static ServerSocket server;
@@ -66,8 +66,9 @@ public class Server {
     public static volatile boolean electionActive = false;
     public static volatile boolean serverStarted = true;
     private static int amountConnections = 0;
+
     /*------------------------------------------------------------------------*/
-    
+
     public static void main(String[] args)
             throws IOException, ClassNotFoundException {
         Scanner keyboardInput = new Scanner(System.in);
@@ -324,20 +325,65 @@ public class Server {
                                     while ((purchasesAccepted.size() + purchasesDenied.size()) < ticket.getListRoutes().size()) {
                                         /* colocar flag para sair do while caso a compra não seja autorizada */
 
-                                        /* Laço para espera da autorização da compra de trechos de outras companhias */
-                                    } 
-                                    
+ /* Laço para espera da autorização da compra de trechos de outras companhias */
+                                    }
+
                                     try {
-                                        ObjectOutputStream output = new ObjectOutputStream(interfaceClients.get(index).getOutputStream());
-                                        
-                                        output.flush();
-                                        output.writeObject(purchaseFlag);
-                                        
+                                        ObjectOutputStream outputInterface = new ObjectOutputStream(interfaceClients.get(index).getOutputStream());
+
+                                        outputInterface.flush();
+                                        outputInterface.writeObject(purchaseFlag);
+
                                         if (!purchaseFlag) {
+                                            for (int i = 0; i < purchasesAccepted.size(); i++) {
+                                                if (purchasesAccepted.get(i).getCompanyName().equals(companyName)) {
+                                                    for (int j = 0; j < routes.size(); j++) {
+                                                        if (purchasesAccepted.get(i).equals(routes.get(j))) {
+                                                            routes.get(j).setAmountSeat(routes.get(j).getAmountSeat() + 1);
+                                                        }
+                                                    }
+                                                } else {
+                                                    for (ServerAddress server : serverAddress) {
+                                                        if (purchasesAccepted.get(i).getCompanyName().equals(server.getCompanyName())) {
+                                                            try {
+                                                                Socket socket
+                                                                        = new Socket(
+                                                                                server.getIpAddress(),
+                                                                                server.getPort()
+                                                                        );
+
+                                                                if (socket.isConnected()) {
+                                                                    ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
+
+                                                                    output.flush();
+                                                                    output.writeObject("POST /buy/cancel");
+                                                                    output.flush();
+
+                                                                    ObjectOutputStream outputBody = new ObjectOutputStream(socket.getOutputStream());
+
+                                                                    outputBody.flush();
+                                                                    outputBody.writeObject(purchasesAccepted.get(i));
+                                                                    outputBody.flush();
+
+                                                                    output.close();
+                                                                    outputBody.close();
+                                                                }
+
+                                                                socket.close();
+                                                            } catch (IOException ioe) {
+                                                                System.err.println("Erro ao tentar se "
+                                                                        + "comunicar com o servidor: "
+                                                                        + server.getCompanyName()
+                                                                );
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
                                             purchaseFlag = true;
                                         }
 
-                                        output.close();
+                                        outputInterface.close();
                                     } catch (IOException ioe) {
                                         System.err.println("Não foi possível se comunicar de volta com a interface.");
                                         System.out.println(ioe);
