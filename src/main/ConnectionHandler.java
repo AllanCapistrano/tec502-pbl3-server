@@ -164,8 +164,12 @@ public class ConnectionHandler implements Runnable {
 
                 ObjectInputStream secondInput
                         = new ObjectInputStream(connection.getInputStream());
-
-                String oldCoordinator = Server.coordinator.getCompanyName();
+                
+                String oldCoordinator = "";
+                if(Server.coordinator != null){
+                    oldCoordinator = Server.coordinator.getCompanyName();
+                }
+                
                 Server.coordinator
                         = (ServerAddress) secondInput.readObject();
                 
