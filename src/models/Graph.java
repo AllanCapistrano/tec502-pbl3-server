@@ -147,17 +147,8 @@ public class Graph implements Serializable{
         for (Edge edge : this.edgesMultiGraph) {
             if (edge.equals(new Edge(firstCity, secondCity))) {
                 temp.add(edge);
-                /* TEMPORÁRIO */
-//                System.out.print(
-//                        edge.getFirstCity().getCityName() + " -> "
-//                        + edge.getSecondCity().getCityName()
-//                        + " | [" + edge.getCompanyName()
-//                        + ", " + edge.getTimeTravel() + "] "
-//                );
             }
         }
-        /* TEMPORÁRIO */
-//        System.out.println("");
 
         return temp;
     }
@@ -270,8 +261,6 @@ public class Graph implements Serializable{
                     cities.get(i + 1).getCityName()
             ));
         }
-        /* TEMPORÁRIO */
-//        System.out.println("");
 
         return travel;
     }

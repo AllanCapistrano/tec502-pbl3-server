@@ -161,7 +161,7 @@ public class Server {
                             }
                         }
 
-                        /* Caso o servidor coordenador esteja ofline, incia 
+                        /* Caso o servidor coordenador esteja offline, inicia 
                         uma nova eleição. */
                         try {
                             if (coordinator != null
@@ -214,7 +214,7 @@ public class Server {
                                 && coordinator.getCompanyName()
                                         .equals(companyName)
                                 && !electionActive) {
-                            /* Somente o servidor coordenador pode inciar uma 
+                            /* Somente o servidor coordenador pode iniciar uma 
                             nova eleição de tempos em tempos. */
                             startElection();
 

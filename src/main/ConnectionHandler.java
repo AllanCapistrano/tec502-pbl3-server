@@ -39,7 +39,7 @@ public class ConnectionHandler implements Runnable {
             /* Requisição recebida. */
             this.received = (String) this.input.readObject();
 
-            /* Processandos a requisição. */
+            /* Processando as requisições. */
             this.processRequests(this.received);
         } catch (IOException ioe) {
             System.err.println("Erro de Entrada/Saída.");
@@ -109,7 +109,6 @@ public class ConnectionHandler implements Runnable {
 
                 Edge e = (Edge) secondInput.readObject();
 
-                /* VER SE PRECISA MUDAR O NOME DO MÉTODO */
                 this.buyRoute(e);
 
                 /* Recebe a autorização do trecho de interesse. */
