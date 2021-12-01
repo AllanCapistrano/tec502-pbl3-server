@@ -15,6 +15,7 @@ import java.util.Scanner;
 import java.util.Stack;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import models.Company;
 import models.Edge;
 import models.Graph;
 import models.Reader;
@@ -46,6 +47,8 @@ public class Server {
 
     public static List<ServerAddress> serverAddress
             = new ArrayList<ServerAddress>();
+    public static List<Company> companies
+            = new ArrayList<Company>();
     public static List<Edge> routes = new ArrayList<>();
     public static List<Ticket> tickets
             = Collections.synchronizedList(new ArrayList());
@@ -120,7 +123,6 @@ public class Server {
                 @Override
                 public void run() {
                     while (true) {
-
                         for (ServerAddress server : serverAddress) {
                             try {
                                 Socket socket
@@ -264,7 +266,7 @@ public class Server {
                                         if (ticket.getListCompanyNames().get(i).equals(companyName)) {
                                             for (Edge route : routes) {
                                                 if (route.equals(ticket.getListRoutes().get(i)) && route.getAmountSeat() > 0) {
-                                                    System.out.println("> Compra do trecho " + route.getFirstCity().getCityName() + " -> " + route.getSecondCity().getCityName() + " realziada com sucesso!");
+                                                    System.out.println("> Compra do trecho " + route.getFirstCity().getCityName() + " -> " + route.getSecondCity().getCityName() + " realizada com sucesso!");
                                                     System.out.println("Qtd assentos antes: " + route.getAmountSeat());
                                                     route.setAmountSeat(route.getAmountSeat() - 1);
                                                     System.out.println("Qtd assentos depois: " + route.getAmountSeat());
@@ -272,7 +274,7 @@ public class Server {
                                                     /* Adicionando a compra na pilha de compras realizadas com sucesso. */
                                                     purchasesAccepted.push(route);
 
-                                                } else if (route.equals(ticket.getListRoutes().get(i)) && route.getAmountSeat() == 0) {
+                                                } else if (route.equals(ticket.getListRoutes().get(i)) && route.getAmountSeat() <= 0) {
                                                     System.out.println("> Não foi possível comprar o trecho " + route.getFirstCity().getCityName() + " -> " + route.getSecondCity().getCityName());
                                                     System.out.println("Qtd assentos: " + route.getAmountSeat());
 
@@ -285,37 +287,7 @@ public class Server {
                                         } else {
                                             for (ServerAddress server : serverAddress) {
                                                 if (ticket.getListCompanyNames().get(i).equals(server.getCompanyName())) {
-                                                    try {
-                                                        Socket socket
-                                                                = new Socket(
-                                                                        server.getIpAddress(),
-                                                                        server.getPort()
-                                                                );
-
-                                                        if (socket.isConnected()) {
-                                                            ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
-
-                                                            output.flush();
-                                                            output.writeObject("POST /buy/authorization");
-                                                            output.flush();
-
-                                                            ObjectOutputStream outputBody = new ObjectOutputStream(socket.getOutputStream());
-
-                                                            outputBody.flush();
-                                                            outputBody.writeObject(ticket.getListRoutes().get(i));
-                                                            outputBody.flush();
-
-                                                            output.close();
-                                                            outputBody.close();
-                                                        }
-
-                                                        socket.close();
-                                                    } catch (IOException ioe) {
-                                                        System.err.println("Erro ao tentar se "
-                                                                + "comunicar com o servidor: "
-                                                                + server.getCompanyName()
-                                                        );
-                                                    }
+                                                    sendObjectToCompany(server, "POST /buy/authorization", ticket.getListRoutes().get(i));
                                                 }
                                             }
                                         }
@@ -344,37 +316,7 @@ public class Server {
                                                 } else {
                                                     for (ServerAddress server : serverAddress) {
                                                         if (purchasesAccepted.get(i).getCompanyName().equals(server.getCompanyName())) {
-                                                            try {
-                                                                Socket socket
-                                                                        = new Socket(
-                                                                                server.getIpAddress(),
-                                                                                server.getPort()
-                                                                        );
-
-                                                                if (socket.isConnected()) {
-                                                                    ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
-
-                                                                    output.flush();
-                                                                    output.writeObject("POST /buy/cancel");
-                                                                    output.flush();
-
-                                                                    ObjectOutputStream outputBody = new ObjectOutputStream(socket.getOutputStream());
-
-                                                                    outputBody.flush();
-                                                                    outputBody.writeObject(purchasesAccepted.get(i));
-                                                                    outputBody.flush();
-
-                                                                    output.close();
-                                                                    outputBody.close();
-                                                                }
-
-                                                                socket.close();
-                                                            } catch (IOException ioe) {
-                                                                System.err.println("Erro ao tentar se "
-                                                                        + "comunicar com o servidor: "
-                                                                        + server.getCompanyName()
-                                                                );
-                                                            }
+                                                            sendObjectToCompany(server, "POST /buy/cancel", purchasesAccepted.get(i));
                                                         }
                                                     }
                                                 }
@@ -530,11 +472,16 @@ public class Server {
         electionActive = true;
         int max = 0;
         int coordinatorIndex;
-        List<Integer> amountRequests = new ArrayList<>();
         List<Integer> indexList = new ArrayList<>();
 
         /* Adicionando a quantidade de requisições deste próprio servidor. */
-        amountRequests.add(tickets.size());
+        companies.removeAll(companies);
+        if (numberTimesCoordinator == MAX_NUMBER_TIMES_COORDINATOR) {
+            companies.add(new Company(0, new ServerAddress(ipAddress, port, companyName)));
+            numberTimesCoordinator = 0;
+        } else {
+            companies.add(new Company(tickets.size(), new ServerAddress(ipAddress, port, companyName)));
+        }
 
         System.out.println("Quantidade de requisições da " + companyName + ": "
                 + tickets.size());
@@ -562,7 +509,7 @@ public class Server {
                                     socket.getInputStream()
                             );
 
-                    amountRequests.add((Integer) input.readObject());
+                    companies.add(new Company((Integer) input.readObject(), server));
 
                     output.close();
                     input.close();
@@ -582,16 +529,16 @@ public class Server {
         }
 
         /* Encontra qual o maior número de requisições. */
-        for (int i = 0; i < amountRequests.size(); i++) {
-            if (max < amountRequests.get(i)) {
-                max = amountRequests.get(i);
+        for (int i = 0; i < companies.size(); i++) {
+            if (max < companies.get(i).getAmountRequests()) {
+                max = companies.get(i).getAmountRequests();
             }
         }
 
         /* Verifica quais servidores possuem a maior quantidade de 
         requisições. */
-        for (int i = 0; i < amountRequests.size(); i++) {
-            if (max == amountRequests.get(i)) {
+        for (int i = 0; i < companies.size(); i++) {
+            if (max == companies.get(i).getAmountRequests()) {
                 indexList.add(i);
             }
         }
@@ -614,50 +561,67 @@ public class Server {
      * @param coordinatorIndex int - Índice do coordenador na lista de endereços
      * servidores.
      */
-    private static void setCoordinator(int coordinatorIndex) {
-        if (coordinatorIndex == 0) {
-            coordinator = new ServerAddress(ipAddress, port, companyName);
-        } else {
-            coordinator = serverAddress.get(coordinatorIndex - 1);
+    private synchronized static void setCoordinator(int coordinatorIndex) {
+        String oldCoordinator = "";
+        if (coordinator != null) {
+            oldCoordinator = coordinator.getCompanyName();
+        }
+        
+        coordinator = companies.get(coordinatorIndex).getServer();
+
+        if (coordinator.getCompanyName().equals(companyName) && oldCoordinator.equals(companyName)) {
+            numberTimesCoordinator++;
         }
 
         for (ServerAddress server : serverAddress) {
-            try {
-                Socket socket
-                        = new Socket(
-                                server.getIpAddress(),
-                                server.getPort()
-                        );
-
-                if (socket.isConnected()) {
-                    ObjectOutputStream output
-                            = new ObjectOutputStream(
-                                    socket.getOutputStream()
-                            );
-
-                    output.flush();
-                    output.writeObject("POST /coordinator");
-
-                    ObjectOutputStream outputBody
-                            = new ObjectOutputStream(
-                                    socket.getOutputStream()
-                            );
-                    outputBody.flush();
-                    outputBody.writeObject(coordinator);
-
-                    output.close();
-                    outputBody.close();
-                }
-
-                socket.close();
-            } catch (IOException ioe) {
-                System.err.println("Erro ao tentar se "
-                        + "comunicar com o servidor: "
-                        + server.getCompanyName()
-                );
-            }
+            sendObjectToCompany(server, "POST /coordinator", coordinator);
         }
 
         electionActive = false;
+    }
+
+    /**
+     * Envio de um objeto para outro servidor de outra companhia.
+     *
+     * @param server ServerAddress - Servidor socket de outra companhia.
+     * @param httpRoute String - Rota HTTP.
+     * @param object Object - Objeto.
+     */
+    private static void sendObjectToCompany(ServerAddress server, String httpRoute, Object object) {
+        try {
+            Socket socket
+                    = new Socket(
+                            server.getIpAddress(),
+                            server.getPort()
+                    );
+
+            if (socket.isConnected()) {
+                ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
+
+                output.flush();
+                output.writeObject(httpRoute);
+                output.flush();
+
+                ObjectOutputStream outputBody = new ObjectOutputStream(socket.getOutputStream());
+
+                outputBody.flush();
+                if (httpRoute.contains("/coordinator")) {
+                    outputBody.writeObject((ServerAddress) object);
+                } else {
+                    outputBody.writeObject((Edge) object);
+                }
+                outputBody.flush();
+
+                output.close();
+                outputBody.close();
+            }
+
+            socket.close();
+        } catch (IOException ioe) {
+            System.err.println("Erro ao tentar se "
+                    + "comunicar com o servidor: "
+                    + server.getCompanyName()
+            );
+        }
     }
 }

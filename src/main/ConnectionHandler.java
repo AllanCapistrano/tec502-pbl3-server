@@ -128,9 +128,9 @@ public class ConnectionHandler implements Runnable {
                     System.out.println("> Compra do trecho "
                             + route.getFirstCity().getCityName() + " -> "
                             + route.getSecondCity().getCityName()
-                            + " realziada com sucesso!");
+                            + " realizada com sucesso!");
                 } else {
-                    System.out.println("> Não foi possível comprar o trecho " + route.getFirstCity().getCityName() + " -> " + route.getSecondCity().getCityName());
+                    System.out.println("> Não foi possível comprar o trecho.");
                     /* Adicionando a compra na pilha de compras que não foram realizadas. */
                     Server.purchasesDenied.push(route);
                     /* Marcando que não foi possível realizar uma compra. */
@@ -374,7 +374,7 @@ public class ConnectionHandler implements Runnable {
                     outputBody.close();
 
                     break;
-                } else if (r.equals(route) && r.getAmountSeat() == 0) {
+                } else if (r.equals(route) && r.getAmountSeat() <= 0) {
                     System.out.println("> Não foi possível comprar o trecho "
                             + r.getFirstCity().getCityName() + " -> "
                             + r.getSecondCity().getCityName()
