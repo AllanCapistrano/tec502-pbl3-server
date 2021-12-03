@@ -13,7 +13,7 @@ Este servidor permite múltiplas conexões com os *clients* ao mesmo tempo, em q
 Além disso, ele implementa o [Bully Algorithm](https://www.geeksforgeeks.org/election-algorithm-and-distributed-processing/), que é utilizado para decidir quais requisições serão processadas, com o intuito de evitar problemas de concorrência, pois o mesmo faz parte de um sistema distribuído.
 
 ### ⛵ Navegação pelos projetos: ###
-- \> Servidor
+- \>Servidor
 - [Interface da Companhia Aérea](https://github.com/JoaoErick/tec502-pbl3-interface)
 
 ### 🔗 Tecnologias utilizadas: ### 
