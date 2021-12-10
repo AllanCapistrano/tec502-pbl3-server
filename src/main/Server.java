@@ -32,11 +32,12 @@ import utils.RandomUtil;
 public class Server {
 
     /*-------------------------- Constantes ----------------------------------*/
-    private static final int AMOUNT_OF_PARTS = 18;
+    private static final int AMOUNT_OF_PARTS = 10;
     private static final int UNIFY_TIME = 30000;
-    private static final int ELECTION_TIME = 10000;
-    private static final int BUY_TIME = 10000;
-    public static final int MAX_NUMBER_TIMES_COORDINATOR = 3;
+    private static final int ELECTION_TIME = 7000;
+    private static final int BUY_TIME = 3000;
+    private static final int TIME_OUT_BUY = 30000;
+    public static final int MAX_NUMBER_TIMES_COORDINATOR = 4;
     /*------------------------------------------------------------------------*/
 
     public static Graph graph = new Graph();
@@ -295,13 +296,22 @@ public class Server {
                                 }
 
                                 if (coordinator != null && coordinator.getCompanyName().equals(companyName)) {
-                                    while ((purchasesAccepted.size() + purchasesDenied.size()) < ticket.getListRoutes().size()) {
-                                        /* Laço para espera da autorização da compra de trechos de outras companhias */
+                                    long start = System.currentTimeMillis();
+                                    long end = start + TIME_OUT_BUY;
+                                    long currentTimeMillis = System.currentTimeMillis();
+
+                                    while ((purchasesAccepted.size() + purchasesDenied.size()) < ticket.getListRoutes().size() && currentTimeMillis < end) {
+                                        /* Laço para espera da autorização da compra de trechos de outras companhias, enquanto o tempo limite não é expirado. */
+                                        currentTimeMillis = System.currentTimeMillis();
                                     }
 
                                     try {
-                                        ObjectOutputStream outputInterface = new ObjectOutputStream(interfaceClients.get(index).getOutputStream());
+                                        if (currentTimeMillis >= end) {
+                                            purchaseFlag = false;
+                                            System.out.println("> Tempo limite de compra expirado.");
+                                        }
 
+                                        ObjectOutputStream outputInterface = new ObjectOutputStream(interfaceClients.get(index).getOutputStream());
                                         outputInterface.flush();
                                         outputInterface.writeObject(purchaseFlag);
 
@@ -566,7 +576,7 @@ public class Server {
         if (coordinator != null) {
             oldCoordinator = coordinator.getCompanyName();
         }
-        
+
         coordinator = companies.get(coordinatorIndex).getServer();
 
         if (coordinator.getCompanyName().equals(companyName) && oldCoordinator.equals(companyName)) {
