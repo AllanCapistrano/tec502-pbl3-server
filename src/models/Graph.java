@@ -11,7 +11,7 @@ import java.util.List;
  * @author Allan Capistrano
  * @author João Erick Barbosa
  */
-public class Graph implements Serializable{
+public class Graph implements Serializable {
 
     private List<Vertex> vertices;
     private List<Edge> edges;
@@ -67,38 +67,57 @@ public class Graph implements Serializable{
             int amountSeat
     ) {
 
+        Edge temp = new Edge(
+                new Vertex(firstCity),
+                new Vertex(secondCity),
+                time,
+                companyName,
+                amountSeat
+        );
+
         if (!edgeExists(firstCity, secondCity)) {
             this.addVertex(firstCity);
             this.addVertex(secondCity);
+
             this.edges.add(
-                    new Edge(
-                            new Vertex(firstCity),
-                            new Vertex(secondCity),
-                            time,
-                            companyName,
-                            amountSeat
-                    )
+                    temp
             );
+
             this.edgesMultiGraph.add(
-                    new Edge(
-                            new Vertex(firstCity),
-                            new Vertex(secondCity),
-                            time,
-                            companyName,
-                            amountSeat
-                    )
+                    temp
             );
         } else {
             this.edgesMultiGraph.add(
-                    new Edge(
-                            new Vertex(firstCity),
-                            new Vertex(secondCity),
-                            time,
-                            companyName,
-                            amountSeat
-                    )
+                    temp
             );
         }
+    }
+
+    /**
+     * Adiciona uma nova ligação entre cidades ao grafo.
+     *
+     * @param edge Edge - Ligação que será adicionada.
+     */
+    public void addEdge(
+            Edge edge
+    ) {
+        if (!this.edges.contains(edge)) {
+            this.addVertex(edge.getFirstCity().getCityName());
+            this.addVertex(edge.getSecondCity().getCityName());
+
+            this.edges.add(
+                    edge
+            );
+
+            this.edgesMultiGraph.add(
+                    edge
+            );
+        } else {
+            this.edgesMultiGraph.add(
+                    edge
+            );
+        }
+
     }
 
     /**
@@ -108,13 +127,7 @@ public class Graph implements Serializable{
      */
     private void addEdges(List<Edge> edges) {
         for (Edge edge : edges) {
-            this.addEdge(
-                    edge.getFirstCity().getCityName(),
-                    edge.getSecondCity().getCityName(),
-                    edge.getTimeTravel(),
-                    edge.getCompanyName(),
-                    edge.getAmountSeat()
-            );
+            this.addEdge(edge);
         }
     }
 
@@ -274,11 +287,11 @@ public class Graph implements Serializable{
         this.addVertices(graph.getVertices());
         this.addEdges(graph.getEdgesMultiGraph());
     }
-    
+
     /**
      * Limpa o grafo unificado.
      */
-    public void cleanUnifiedGraph(){
+    public void cleanUnifiedGraph() {
         this.vertices.removeAll(this.vertices);
         this.edges.removeAll(this.edges);
         this.edgesMultiGraph.removeAll(this.edgesMultiGraph);

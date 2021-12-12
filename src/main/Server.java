@@ -437,7 +437,7 @@ public class Server {
                                     /* Unificando o grafo da companhia com as 
                                 demais. */
                                     unifiedGraph.unifyGraph(otherGraph);
-
+                                    
                                     output.close();
                                     input.close();
                                 }
