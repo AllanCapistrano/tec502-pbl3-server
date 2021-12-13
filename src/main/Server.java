@@ -84,9 +84,9 @@ public class Server {
         int companyIndex = 0;
 
         /* Adicionando os servidores. */
-        serverAddress.add(new ServerAddress("26.174.47.54", 12240, "Azul"));
-        serverAddress.add(new ServerAddress("26.174.47.54", 12241, "GOL"));
-        serverAddress.add(new ServerAddress("26.174.47.54", 12242, "TAM"));
+        serverAddress.add(new ServerAddress("localhost", 12240, "Azul"));
+        serverAddress.add(new ServerAddress("localhost", 12241, "GOL"));
+        serverAddress.add(new ServerAddress("localhost", 12242, "TAM"));
 
         System.out.println("Selecione de qual companhia pertence este servidor: ");
         System.out.println("1 - Azul");
