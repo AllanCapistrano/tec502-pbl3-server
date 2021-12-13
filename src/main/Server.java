@@ -74,15 +74,19 @@ public class Server {
     private static int amountConnections = 0;
 
     /*------------------------------------------------------------------------*/
+    private static Socket socketElection;
+    private static Socket socketCoordinator;
+    private static Socket socketUnifyGraph;
+
     public static void main(String[] args)
             throws IOException, ClassNotFoundException {
         Scanner keyboardInput = new Scanner(System.in);
         int companyIndex = 0;
 
         /* Adicionando os servidores. */
-        serverAddress.add(new ServerAddress("localhost", 12240, "Azul"));
-        serverAddress.add(new ServerAddress("localhost", 12241, "GOL"));
-        serverAddress.add(new ServerAddress("localhost", 12242, "TAM"));
+        serverAddress.add(new ServerAddress("26.174.47.54", 12240, "Azul"));
+        serverAddress.add(new ServerAddress("26.174.47.54", 12241, "GOL"));
+        serverAddress.add(new ServerAddress("26.174.47.54", 12242, "TAM"));
 
         System.out.println("Selecione de qual companhia pertence este servidor: ");
         System.out.println("1 - Azul");
@@ -126,13 +130,13 @@ public class Server {
                     while (true) {
                         for (ServerAddress server : serverAddress) {
                             try {
-                                Socket socket
+                                socketElection
                                         = new Socket(
                                                 server.getIpAddress(),
                                                 server.getPort()
                                         );
 
-                                if (socket.isConnected()) {
+                                if (socketElection.isConnected()) {
                                     amountConnections++;
                                     System.out.println("\n> Qtd. de servidores "
                                             + "online: "
@@ -141,7 +145,7 @@ public class Server {
 
                                     ObjectOutputStream output
                                             = new ObjectOutputStream(
-                                                    socket.getOutputStream()
+                                                    socketElection.getOutputStream()
                                             );
                                     output.flush();
                                     output.writeObject("POST /ping");
@@ -149,18 +153,27 @@ public class Server {
 
                                     ObjectOutputStream outputBody
                                             = new ObjectOutputStream(
-                                                    socket.getOutputStream()
+                                                    socketElection.getOutputStream()
                                             );
                                     outputBody.flush();
                                     outputBody.writeObject(companyName);
                                 }
 
-                                socket.close();
+                                socketElection.close();
                             } catch (IOException ioe) {
                                 System.err.println("Erro ao tentar se "
                                         + "comunicar com o servidor: "
                                         + server.getCompanyName()
                                 );
+
+                                try {
+                                    if (socketElection != null) {
+                                        socketElection.close();
+                                    }
+                                } catch (IOException ioex) {
+                                    System.err.println("Não foi possível fechar a porta da conexão.");
+                                    System.out.println(ioex);
+                                }
                             }
                         }
 
@@ -170,7 +183,7 @@ public class Server {
                             if (coordinator != null
                                     && !coordinator.getCompanyName()
                                             .equals(companyName)) {
-                                Socket socketCoordinator
+                                socketCoordinator
                                         = new Socket(
                                                 coordinator.getIpAddress(),
                                                 coordinator.getPort()
@@ -194,15 +207,32 @@ public class Server {
                                             + ((String) inputBody.readObject())
                                             + " vivo!");
                                 }
+                                socketCoordinator.close();
                             }
 
                         } catch (IOException ex) {
                             System.err.println("\nCoordenador OFF.\n");
+                            try {
+                                if (socketElection != null) {
+                                    socketCoordinator.close();
+                                }
+                            } catch (IOException ioex) {
+                                System.err.println("Não foi possível fechar a porta da conexão.");
+                                System.out.println(ioex);
+                            }
+
                             startElection();
                         } catch (ClassNotFoundException cnfe) {
                             System.err.println("A classe String não foi "
                                     + "encontrada.");
                             System.out.println(cnfe);
+
+                            try {
+                                socketCoordinator.close();
+                            } catch (IOException ioex) {
+                                System.err.println("Não foi possível fechar a porta da conexão.");
+                                System.out.println(ioex);
+                            }
                         }
 
                         if (serverStarted
@@ -366,9 +396,9 @@ public class Server {
                 }
             });
 
-            /* Finalizar a thread de eleição quando fechar o programa. */
+            /* Finalizar a thread de compra de passagens quando fechar o programa. */
             threadBuy.setDaemon(true);
-            /* Iniciar a thread de eleição. */
+            /* Iniciar a thread de compra de passagens. */
             threadBuy.start();
 
             System.out.println("> Aguardando conexão");
@@ -409,16 +439,16 @@ public class Server {
 
                         for (ServerAddress server : serverAddress) {
                             try {
-                                Socket socket
+                                socketUnifyGraph
                                         = new Socket(
                                                 server.getIpAddress(),
                                                 server.getPort()
                                         );
 
-                                if (socket.isConnected()) {
+                                if (socketUnifyGraph.isConnected()) {
                                     ObjectOutputStream output
                                             = new ObjectOutputStream(
-                                                    socket.getOutputStream()
+                                                    socketUnifyGraph.getOutputStream()
                                             );
 
                                     output.flush();
@@ -427,7 +457,7 @@ public class Server {
 
                                     ObjectInputStream input
                                             = new ObjectInputStream(
-                                                    socket.getInputStream()
+                                                    socketUnifyGraph.getInputStream()
                                             );
 
                                     /* Recebendo o grafo. */
@@ -437,21 +467,37 @@ public class Server {
                                     /* Unificando o grafo da companhia com as 
                                 demais. */
                                     unifiedGraph.unifyGraph(otherGraph);
-                                    
+
                                     output.close();
                                     input.close();
                                 }
 
-                                socket.close();
+                                socketUnifyGraph.close();
                             } catch (IOException ioe) {
                                 System.err.println("\nErro ao tentar se "
                                         + "comunicar com o servidor: "
                                         + server.getCompanyName() + "\n"
                                 );
+
+                                try {
+                                    if (socketElection != null) {
+                                        socketUnifyGraph.close();
+                                    }
+                                } catch (IOException ioex) {
+                                    System.err.println("Não foi possível fechar a porta da conexão.");
+                                    System.out.println(ioex);
+                                }
                             } catch (ClassNotFoundException cnfe) {
                                 System.err.println("A classe Graph não foi "
                                         + "encontrada.");
                                 System.out.println(cnfe);
+
+                                try {
+                                    socketUnifyGraph.close();
+                                } catch (IOException ioex) {
+                                    System.err.println("Não foi possível fechar a porta da conexão.");
+                                    System.out.println(ioex);
+                                }
                             }
                         }
 
